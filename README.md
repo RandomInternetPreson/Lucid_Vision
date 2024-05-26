@@ -24,7 +24,7 @@ The Lucid Vision Extension operates by intercepting and modifying user input and
 
 So if a user enters text into the "send a message" field and has a new picture uploaded into the Lucid_Vision ui, what will happen behind the scenes is the at the user message will be appended with the "File Location: (file location)" Trigger phrase, at which point the LLM will see this and understand that it needs to reply back with questions about the image, and that those questions are being sent to a vison model.
 
-The cool thing is that let's say later in the conversation you want to know something specific about a previous picture, all you need to do is ask your LLM YOU DO NOT NEED TO REUPLOAD THE PICTURE, the LLM should be able to interact with the extension on its own after you uploaed your first picture.
+The cool thing is that let's say later in the conversation you want to know something specific about a previous picture, all you need to do is ask your LLM, YOU DO NOT NEED TO REUPLOAD THE PICTURE, the LLM should be able to interact with the extension on its own after you uploaed your first picture.
 
 Depending on the selected vision model, the extension either sends a command to the model's command-line interface (for DeepSeek) or directly interacts with the model's Python API (for PhiVision and PaliGemma) to generate a response. The response is then appended to the chat history, providing the user with detailed insights about the image.
 
@@ -33,9 +33,9 @@ The extension is designed to be efficient with system resources by only loading 
 
 ## **How to install and setup:**
 
-1. Install this edited prior commit from oobabooga's textgen https://github.com/RandomInternetPreson/textgen_webui_Lucid_Vision_Testing OR use the latest version of textgen.  Is using the edited older version, make sure to rename the install folder `text-generation-webui`
+1. Install this edited prior commit from oobabooga's textgen https://github.com/RandomInternetPreson/textgen_webui_Lucid_Vision_Testing OR use the latest version of textgen.  If using the edited older version, make sure to rename the install folder `text-generation-webui`
    
-(Note, a couple months ago gradio had a massive update.  For me, this has caused a lot of glitches and errors with extensions; I've briefly tested the Lucid_Vision extension in the newest implementaion of textgen and it will work.  However, I was getting timeout popups when vision models were loading for the first time, gradio wasn't watiing for the response from the model upon first load. After a model is loaded once, it is saved in cpu ram cache (this doesn't actively use your ram, it just uses what is free to keep the models in memory so they are quicly reloaded into gpu ram if necessary) and gradio doesn't seem to timeout as often.  The slightly older version of textgen that I've edited does not experience this issue)
+(Note, a couple months ago gradio had a massive update.  For me, this has caused a lot of glitches and errors with extensions; I've briefly tested the Lucid_Vision extension in the newest implementaion of textgen and it will work.  However, I was getting timeout popups when vision models were loading for the first time, gradio wasn't watiing for the response from the model upon first load. After a model is loaded once, it is saved in cpu ram cache (this doesn't actively use your ram, it just uses what is free to keep the models in memory so they are quickly reloaded into gpu ram if necessary) and gradio doesn't seem to timeout as often.  The slightly older version of textgen that I've edited does not experience this issue)
 
 2. If you want to use the update wizard, right now would be the time to install the requirements for Lucid_Vision with the update wizard; so install lucid vision as you normally would any other extension.
    
@@ -86,7 +86,9 @@ pip install transformers --upgrade --no-cache-dir
     "paligemma_cpu_model_id": "(fill_In)"
    }
 ```
-If your install directory is /home/username/Desktop/oobLucidVision/text-generation-webui/  Make note that you want to change / to \ if you are on Windows
+If your install directory is /home/username/Desktop/oobLucidVision/text-generation-webui/  the config file will look like this for example:
+
+Make note that you want to change / to \ if you are on Windows
 
 ```
    {
@@ -108,11 +110,13 @@ If your install directory is /home/username/Desktop/oobLucidVision/text-generati
 3. DeepseekVL can take a while to load initially, that's just the way it is.
    
 
-## **How to use:**
+# **How to use:**
+
+## **BASICS:**
 
 **When you load a picture once, it is used once.  Even if the image stays present in the UI element on screen, it is not actively being used.**
 
-Okay the extension can do many different things with varying lelvls of difficulty.
+Okay the extension can do many different things with varying levels of difficulty.
 
 Starting out with the basics and understanding how to talk with your vision models:
 
