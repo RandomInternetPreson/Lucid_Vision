@@ -1,7 +1,7 @@
 WIP Do NOT download yet
 
 
-Basics
+**How to install and setup:**
 
 1. Install this edited prior commit from oobabooga's textgen https://github.com/RandomInternetPreson/textgen_webui_Lucid_Vision_Testing OR use the latest version of textgen.  Is using the edited older version, make sure to rename the install folder `text-generation-webui`
    
