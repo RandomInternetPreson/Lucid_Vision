@@ -158,7 +158,7 @@ This is how to use your favorite LLM WITH an additional Vision Model, I wanted a
 
 To use Lucid_Vision as intended requires a little bit of setup:
 
-1. In `Parameters` then `chat` load the "AI_Image" character:
+1. In `Parameters` then `chat` load the "AI_Image" character (this card is in the edited older commit, if using your own version of textgen the character card is here: https://github.com/RandomInternetPreson/Lucid_Vision/blob/main/AI_Image.yaml put it in the `characters` folder of the textgen install folder:
    ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/8b5d770a-b72a-4a74-aa4a-f67fe2a113ba)
 
 2. In `Parameters` then `Generation` under `Custom stopping strings` enter "Vision Model Responses:" exactly as shown:
