@@ -198,7 +198,7 @@ If the vision model is not that smart (Deepseek, paligemma) then it will have a 
 
 If you run into this situation, it is best to prompt your LLM like this:
 
-`Great, can you get the complete contents of the nutritional facts from earlier, like all the text? Just start with your questions to the vision model please.'
+`Great, can you get the complete contents of the nutritional facts from earlier, like all the text? Just start with your questions to the vision model please.`
 ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/38b59679-3550-410d-aac2-29756a058c8f)
 
 6. Please do not get frustrated right away, the Advanced method of usage depends heavily on your LLM's ability to understand the instructions from the character card.  The instructions were written by the 8x22B model itself, I explained what I wanted the model to do and had it write its own instructions.  This might be a viable alternative if you are struggling to get your model to adhere to the instructions from the character card.
