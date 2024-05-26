@@ -1,4 +1,22 @@
-WIP Do NOT download yet
+To accurately proportion credit:
+
+WizardLM-2-8x22B (quantized with exllamaV2 to 8bit precision) = 90% of all the work done in this repo.  That model wrote 100% of all the code and the introduction to this repo. 
+
+CommandR+ (quantized with exllamaV2 to 8bit precision) = ~5% of all the work.  CommandR+ contextualized the coding examples and rules for making extensions from Oogabooga's textgen repo extreamly well, and provided a good foundation to develope the code.
+
+RandomInternetPreson = 5% of all the work done.  I came up with the original idea, the original general outline of how the pieces would interact, and provided feedback to the WizardLM model, but I did not write any code.  I'm actually not very good with python yet, with most of my decades of coding being in Matlab.
+
+My goal from the beginning was to write this extension offline without any addiitonal resources, sometimes it was a little frusturating but I soon understood how to get want I needed from the models running locally.
+
+I would say that most of the credit should go to Oobabooga, for without them I would be struggling to even interact with my models.  Please consider supporting them:
+
+https://github.com/sponsors/oobabooga
+
+or 
+
+https://ko-fi.com/oobabooga
+
+I am their top doner on ko-fi (Mr. A) and donate 15$ montly, their software is extreamly important to the opensource community.
 
 
 # Lucid_Vision Extension for Oobabooga's textgen-webui
@@ -6,7 +24,6 @@ WIP Do NOT download yet
 Welcome to the Lucid Vision Extension repository! This extension enhances the capabilities of textgen-webui by integrating advanced vision models, allowing users to have contextualized conversations about images with their favorite language models; and allowing direct communciation with vision models.
 
 ## Features
-
 
 * Multi-Model Support: Interact with different vision models, including PhiVision, DeepSeek, and PaliGemma, with options for both GPU and CPU inference.
 
