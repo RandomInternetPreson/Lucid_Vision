@@ -69,3 +69,22 @@ If your install directory is /home/username/Desktop/oobLucidVision/text-generati
     "paligemma_cpu_model_id": "(fill_In)" *This is the folder where your paligemma vision model is stored
    }
 ```
+
+**Quirks and Notes:**
+1. **When you load a picture once, it is used once.  Even if the image stays present in the UI element on screen, it is not actively being used.**
+2. If you are using other extensions, load Lucid_Vision first.  Put it first in your CMD_FLAGS.txt file or make sure to check it first in the sequence of check boxes in the session tab UI.
+3. DeepseekVL can take a while to load initially, that's just the way it is.
+   
+
+**How to use:**
+
+Okay the extension can do many different things with varying lelvls of difficulty.
+
+Starting out with the basics and understanding how to talk with your vision models:
+
+Scroll down past where you would normally type something to the LLM
+![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/227ff483-5041-46a7-9b5b-a8f9dd3c673e)
+
+Start out by interacting with the vision models without involvement of a seperate LLM model by pressing the `Ask Vision Model` button
+![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/4530e13f-30a1-43d9-8383-c05e31ddb5d7)
+
