@@ -1,7 +1,35 @@
 WIP Do NOT download yet
 
 
-**How to install and setup:**
+# Lucid_Vision Extension for Oobabooga's textgen-webui
+
+Welcome to the Lucid Vision Extension repository! This extension enhances the capabilities of textgen-webui by integrating advanced vision models, allowing users to have contextualized conversations about images with their favorite language models; and allowing direct communciation with vision models.
+
+## Features
+
+
+* Multi-Model Support: Interact with different vision models, including PhiVision, DeepSeek, and PaliGemma, with options for both GPU and CPU inference.
+
+* On-Demand Loading: Vision models are loaded into memory only when needed to answer a question, optimizing resource usage.
+
+* Seamless Integration: Easily switch between vision models using a Gradio UI radio button selector.
+
+* Cross-Platform Compatibility: The extension is designed to work on various operating systems, including Unix-based systems and Windows. (not tested in Windows yet, but should probably work?)
+
+## How It Works
+
+The Lucid Vision Extension operates by intercepting and modifying user input and output within the textgen-webui framework. When a user uploads an image and asks a question, the extension detects a special trigger phrase ("File location") and extracts the associated file path and question. 
+
+So if a user enters text into the "send a message" field and has a new picture uploaded into the Lucid_Vision ui, what will happen behind the scenes is the at the user message will be appended with the "File Location: (file location)" Trigger phrase, at which point the LLM will see this and understand that it needs to reply back with questions about the image, and that those questions are being sent to a vison model.
+
+The cool thing is that let's say later in the conversation you want to know something specific about a previous picture, all you need to do is ask your LLM YOU DO NOT NEED TO REUPLOAD THE PICTURE, the LLM should be able to interact with the extension on its own after you uploaed your first picture.
+
+Depending on the selected vision model, the extension either sends a command to the model's command-line interface (for DeepSeek) or directly interacts with the model's Python API (for PhiVision and PaliGemma) to generate a response. The response is then appended to the chat history, providing the user with detailed insights about the image.
+
+The extension is designed to be efficient with system resources by only loading the vision models into memory when they are actively being used to process a question. After generating a response, the models are immediately unloaded to free up memory and GPU VRAM.
+
+
+## **How to install and setup:**
 
 1. Install this edited prior commit from oobabooga's textgen https://github.com/RandomInternetPreson/textgen_webui_Lucid_Vision_Testing OR use the latest version of textgen.  Is using the edited older version, make sure to rename the install folder `text-generation-webui`
    
@@ -72,13 +100,13 @@ If your install directory is /home/username/Desktop/oobLucidVision/text-generati
    }
 ```
 
-**Quirks and Notes:**
+## **Quirks and Notes:**
 1. **When you load a picture once, it is used once.  Even if the image stays present in the UI element on screen, it is not actively being used.**
 2. If you are using other extensions, load Lucid_Vision first.  Put it first in your CMD_FLAGS.txt file or make sure to check it first in the sequence of check boxes in the session tab UI.
 3. DeepseekVL can take a while to load initially, that's just the way it is.
    
 
-**How to use:**
+## **How to use:**
 
 **When you load a picture once, it is used once.  Even if the image stays present in the UI element on screen, it is not actively being used.**
 
