@@ -184,6 +184,7 @@ To use Lucid_Vision as intended requires a little bit of setup:
    ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/e8b0791b-cce8-4183-8971-42e5383d6c46)
 
    Please note that the vision model recieved all this as text:
+   
    "Certainly! To retrieve the complete contents of the nutritional facts from the image you provided earlier, I will ask the vision model to perform an Optical Character Recognition (OCR) task on the image. Here is the question for the vision model:
 
     Can you perform OCR on the provided image and extract all the text from the nutrition facts label, including the details of each nutrient and its corresponding values?"
