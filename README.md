@@ -2,13 +2,13 @@ WIP DO NOT DOWNLOAD YET
 
 To accurately proportion credit:
 
-WizardLM-2-8x22B (quantized with exllamaV2 to 8bit precision) = 90% of all the work done in this repo.  That model wrote 100% of all the code and the introduction to this repo. 
+WizardLM-2-8x22B (quantized with exllamaV2 to 8bit precision) = 90% of all the work done in this repo.  That model wrote 100% of all the code and most of the introduction to this repo. 
 
 CommandR+ (quantized with exllamaV2 to 8bit precision) = ~5% of all the work.  CommandR+ contextualized the coding examples and rules for making extensions from Oogabooga's textgen repo extreamly well, and provided a good foundation to develope the code.
 
 RandomInternetPreson = 5% of all the work done.  I came up with the original idea, the original general outline of how the pieces would interact, and provided feedback to the WizardLM model, but I did not write any code.  I'm actually not very good with python yet, with most of my decades of coding being in Matlab.
 
-My goal from the beginning was to write this extension offline without any addiitonal resources, sometimes it was a little frusturating but I soon understood how to get want I needed from the models running locally.
+My goal from the beginning was to write this extension offline without any additional resources, sometimes it was a little frusturating but I soon understood how to get want I needed from the models running locally.
 
 I would say that most of the credit should go to Oobabooga, for without them I would be struggling to even interact with my models.  Please consider supporting them:
 
@@ -35,7 +35,7 @@ Welcome to the Lucid Vision Extension repository! This extension enhances the ca
 
 * Cross-Platform Compatibility: The extension is designed to work on various operating systems, including Unix-based systems and Windows. (not tested in Windows yet, but should probably work?)
 
-* Direct communication with vision models, you do not need to load a LLM to interact with the seperate vision models.
+* Direct communication with vision models, you do not need to load a LLM to interact with the separate vision models.
 
 ## How It Works
 
@@ -43,7 +43,7 @@ The Lucid Vision Extension operates by intercepting and modifying user input and
 
 So if a user enters text into the "send a message" field and has a new picture uploaded into the Lucid_Vision ui, what will happen behind the scenes is the at the user message will be appended with the "File Location: (file location)" Trigger phrase, at which point the LLM will see this and understand that it needs to reply back with questions about the image, and that those questions are being sent to a vison model.
 
-The cool thing is that let's say later in the conversation you want to know something specific about a previous picture, all you need to do is ask your LLM, YOU DO NOT NEED TO REUPLOAD THE PICTURE, the LLM should be able to interact with the extension on its own after you uploaed your first picture.
+The cool thing is that let's say later in the conversation you want to know something specific about a previous picture, all you need to do is ask your LLM, YOU DO NOT NEED TO REUPLOAD THE PICTURE, the LLM should be able to interact with the extension on its own after you uploaded your first picture.
 
 Depending on the selected vision model, the extension either sends a command to the model's command-line interface (for DeepSeek) or directly interacts with the model's Python API (for PhiVision and PaliGemma) to generate a response. The response is then appended to the chat history, providing the user with detailed insights about the image.
 
@@ -54,7 +54,7 @@ The extension is designed to be efficient with system resources by only loading 
 
 1. Install this edited prior commit from oobabooga's textgen https://github.com/RandomInternetPreson/textgen_webui_Lucid_Vision_Testing OR use the latest version of textgen.  If using the edited older version, make sure to rename the install folder `text-generation-webui`
    
-(Note, a couple months ago gradio had a massive update.  For me, this has caused a lot of glitches and errors with extensions; I've briefly tested the Lucid_Vision extension in the newest implementaion of textgen and it will work.  However, I was getting timeout popups when vision models were loading for the first time, gradio wasn't watiing for the response from the model upon first load. After a model is loaded once, it is saved in cpu ram cache (this doesn't actively use your ram, it just uses what is free to keep the models in memory so they are quickly reloaded into gpu ram if necessary) and gradio doesn't seem to timeout as often.  The slightly older version of textgen that I've edited does not experience this issue)
+(Note, a couple months ago gradio had a massive update.  For me, this has caused a lot of glitches and errors with extensions; I've briefly tested the Lucid_Vision extension in the newest implementation of textgen and it will work.  However, I was getting timeout popups when vision models were loading for the first time, gradio wasn't waiting for the response from the model upon first load. After a model is loaded once, it is saved in cpu ram cache (this doesn't actively use your ram, it just uses what is free to keep the models in memory so they are quickly reloaded into gpu ram if necessary) and gradio doesn't seem to timeout as often.  The slightly older version of textgen that I've edited does not experience this issue)
 
 2. If you want to use the update wizard, right now would be the time to install the requirements for Lucid_Vision with the update wizard; so install lucid vision as you normally would any other extension.
    
@@ -64,7 +64,7 @@ The extension is designed to be efficient with system resources by only loading 
 pip install pexpect
 ```
 
-3. Update the transformers library using the cmd_yourOShere.sh/bat file (so either cmd_linux.sh, cmd_macos.sh, cmd_windows.bat, or cmd_wsl.bat) and entering the following lines.  If you run the update wizard after this point, it will overrite this update to transformers.  The newest transformes package has the libraries for paligemma, which the code needs to import regardless of whether or not you are intending to use the model.
+3. Update the transformers library using the cmd_yourOShere.sh/bat file (so either cmd_linux.sh, cmd_macos.sh, cmd_windows.bat, or cmd_wsl.bat) and entering the following lines.  If you run the update wizard after this point, it will overrite this update to transformers.  The newest transformers package has the libraries for paligemma, which the code needs to import regardless of whether or not you are intending to use the model.
 
 ```
 pip uninstall transformers -y
@@ -183,17 +183,17 @@ To use Lucid_Vision as intended requires a little bit of setup:
 5. Now I can ask it a question from a previous image and the LLM will automatically know to prompt the vision model and it will find the previously saved image on its own:
    ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/e8b0791b-cce8-4183-8971-42e5383d6c46)
 
-   Please note that the vision model recieved all this as text:
+   Please note that the vision model received all this as text:
    
    "Certainly! To retrieve the complete contents of the nutritional facts from the image you provided earlier, I will ask the vision model to perform an Optical Character Recognition (OCR) task on the image. Here is the question for the vision model:
 
     Can you perform OCR on the provided image and extract all the text from the nutrition facts label, including the details of each nutrient and its corresponding values?"
 
-If the vision model is not that smart (Deepseek, paligemma) then it will have a difficult time contextualizeing the text prior to the questions for the vision model.
+If the vision model is not that smart (Deepseek, paligemma) then it will have a difficult time contextualizing the text prior to the questions for the vision model.
 
 If you run into this situation, it is best to prompt your LLM like this:
 
 `Great, can you get the complete contents of the nutritional facts from earlier, like all the text? Just start with your questions to the vision model please.'
 ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/38b59679-3550-410d-aac2-29756a058c8f)
 
-
+6. Please do not get frustrated right away, the Advanced method of usage depends heavily on your LLM's ability to understand the instructions from the character card.  The instructions were written by the 8x22B model itself, I explained what I wanted the model to do and had it write its own instructions.  This might be a viable alternative if you are struggling to get your model to adhere to the instructions from the character card.
