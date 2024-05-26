@@ -23,7 +23,7 @@ or
 
 https://ko-fi.com/oobabooga
 
-I am their top doner on ko-fi (Mr. A) and donate 15$ montly, their software is extreamly important to the opensource community.
+I am their top donor on ko-fi (Mr. A) and donate 15$ montly, their software is extreamly important to the opensource community.
 
 
 # Lucid_Vision Extension for Oobabooga's textgen-webui
