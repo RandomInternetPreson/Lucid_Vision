@@ -16,9 +16,11 @@ Welcome to the Lucid Vision Extension repository! This extension enhances the ca
 
 * Cross-Platform Compatibility: The extension is designed to work on various operating systems, including Unix-based systems and Windows. (not tested in Windows yet, but should probably work?)
 
+* Direct communication with vision models, you do not need to load a LLM to interact with the seperate vision models.
+
 ## How It Works
 
-The Lucid Vision Extension operates by intercepting and modifying user input and output within the textgen-webui framework. When a user uploads an image and asks a question, the extension detects a special trigger phrase ("File location") and extracts the associated file path and question. 
+The Lucid Vision Extension operates by intercepting and modifying user input and output within the textgen-webui framework. When a user uploads an image and asks a question, the extension appends a special trigger phrase ("File location") and extracts the associated file path and question.
 
 So if a user enters text into the "send a message" field and has a new picture uploaded into the Lucid_Vision ui, what will happen behind the scenes is the at the user message will be appended with the "File Location: (file location)" Trigger phrase, at which point the LLM will see this and understand that it needs to reply back with questions about the image, and that those questions are being sent to a vison model.
 
