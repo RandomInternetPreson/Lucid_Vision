@@ -171,4 +171,14 @@ To use Lucid_Vision as intended requires a little bit of setup:
    I uploaded my image to the Lucid_Vision UI element, then typed my question, then pressed "Generate"; it doesn't matter which order you upload your picture or type your question, both are sent to the LLM at the same time.
    ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/f1525e8d-551d-4719-9e01-3f26b4362d7c)
 
+4. Continue to give the model more images or just talk about something else, in this example I give the model two new images one of a humanoid robot and one of the nutritional facts for a container of sourcream:
+   ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/77131490-fb19-4062-a65f-c0880515e252)
+   ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/fed7021f-edb5-4667-aae0-c05021291618)
+   ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/d1049551-4e48-4ced-85d9-fbb0441330a9)
 
+   Then I asked the model why the sky is blue:
+
+   ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/deb7b70a-edf7-4014-bd8c-2492bae00ea6)
+
+
+   
