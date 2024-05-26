@@ -180,5 +180,19 @@ To use Lucid_Vision as intended requires a little bit of setup:
 
    ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/deb7b70a-edf7-4014-bd8c-2492bae00ea6)
 
+5. Now I can ask it a question from a previous image and the LLM will automatically know to prompt the vision model and it will find the previously saved image on its own:
+   ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/e8b0791b-cce8-4183-8971-42e5383d6c46)
 
-   
+   Please note that the vision model recieved all this as text:
+   "Certainly! To retrieve the complete contents of the nutritional facts from the image you provided earlier, I will ask the vision model to perform an Optical Character Recognition (OCR) task on the image. Here is the question for the vision model:
+
+    Can you perform OCR on the provided image and extract all the text from the nutrition facts label, including the details of each nutrient and its corresponding values?"
+
+If the vision model is not that smart (Deepseek, paligemma) then it will have a difficult time contextualizeing the text prior to the questions for the vision model.
+
+If you run into this situation, it is best to prompt your LLM like this:
+
+`Great, can you get the complete contents of the nutritional facts from earlier, like all the text? Just start with your questions to the vision model please.'
+![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/38b59679-3550-410d-aac2-29756a058c8f)
+
+
