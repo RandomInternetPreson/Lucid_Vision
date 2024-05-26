@@ -3,7 +3,7 @@ WIP Do NOT download yet
 
 Basics
 
-1. Install this edited prior commit from oobabooga's textgen ([https://github.com/RandomInternetPreson/text-generation-webui_Lucid_Vision_Testing](https://github.com/RandomInternetPreson/textgen_webui_Lucid_Vision_Testing)) OR use the latest version of textgen.
+1. Install this edited prior commit from oobabooga's textgen https://github.com/RandomInternetPreson/textgen_webui_Lucid_Vision_Testing OR use the latest version of textgen.
    
 (Note, a couple months ago gradio had a massive update.  For me, this has caused a lot of glitches and errors with extensions; I've briefly tested the Lucid_Vision extension in the newest implementaion of textgen and it will work.  However, I was getting timeout popups when vision models were loading for the first time, gradio wasn't watiing for the response from the model upon first load. After a model is loaded once, it is saved in cpu ram cache (this doesn't actively use your ram, it just uses what is free to keep the models in memory so they are quicly reloaded into gpu ram if necessary) and gradio doesn't seem to timeout as often.  The slightly older version of textgen that I've edited does not experience this issue)
 
