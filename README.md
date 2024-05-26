@@ -39,8 +39,10 @@ pip install transformers --upgrade --no-cache-dir
 6. If you want to use Phi-3-vision-128k-instruct, download it here: https://huggingface.co/microsoft/Phi-3-vision-128k-instruct
 
 7. If you want to use paligemma-3b, download it here: https://huggingface.co/google/paligemma-3b-ft-cococap-448 (this is just one out of many fine-tunes google provides)
+   
+   Read this blog on how to inference with the model: https://huggingface.co/blog/paligemma
 
-8. Before using the extension you need to update the config file; open it in a text editor:
+9. Before using the extension you need to update the config file; open it in a text editor:
 ```
    {
     "image_history_dir": "(fill_In)/extensions/Lucid_Vision/ImageHistory/",
@@ -78,6 +80,8 @@ If your install directory is /home/username/Desktop/oobLucidVision/text-generati
 
 **How to use:**
 
+**When you load a picture once, it is used once.  Even if the image stays present in the UI element on screen, it is not actively being used.**
+
 Okay the extension can do many different things with varying lelvls of difficulty.
 
 Starting out with the basics and understanding how to talk with your vision models:
@@ -88,3 +92,6 @@ Scroll down past where you would normally type something to the LLM
 Start out by interacting with the vision models without involvement of a seperate LLM model by pressing the `Ask Vision Model` button
 ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/4530e13f-30a1-43d9-8383-c05e31ddb5d7)
 
+**Note paligemma requries a little diffent type prompting sometimes, read the blog on how to inference with it: https://huggingface.co/blog/paligemma**
+
+Do this with every model you intend on using, upload a picture, and ask a question 
