@@ -1,4 +1,4 @@
-WIP DO NOT DOWNLOAD YET
+Experimental, and am currently working to improve the code; but it may work for most.
 
 To accurately proportion credit:
 
