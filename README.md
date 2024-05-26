@@ -155,3 +155,20 @@ Do this with every model you intend on using, upload a picture, and ask a questi
 Okay, this is why I built the extension in the first place; direct interaction with the vision model was actually an afterthought after I had all the code working.
 
 This is how to use your favorite LLM WITH an additional Vision Model, I wanted a way to give my LLMs eyes essentially.  I realize that good multimodal models are likely around the corner, but until they match the intellect of very good LLMs, I'd rather have a different vision model work with a good LLM.
+
+To use Lucid_Vision as intended requires a little bit of setup:
+
+1. In `Parameters` then `chat` load the "AI_Image" character:
+   ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/8b5d770a-b72a-4a74-aa4a-f67fe2a113ba)
+
+2. In `Parameters` then `Generation` under `Custom stopping strings` enter "Vision Model Responses:" exactly as shown:
+   ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/7a09650d-4fce-4a8f-badb-b26b4484bf37)
+
+3. Test to see if your LLM understands the instructions for the AI_Image character; ask it this:
+   `Can you tell me what is in this image? Do not add any additional text to the beginning of your response to me, start your reply with the questions.`
+   ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/817605d7-dcab-4e6c-8c39-6d119a189431)
+
+   I uploaded my image to the Lucid_Vision UI element, then typed my question, then pressed "Generate"; it doesn't matter which order you upload your picture or type your question, both are sent to the LLM at the same time.
+   ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/f1525e8d-551d-4719-9e01-3f26b4362d7c)
+
+
