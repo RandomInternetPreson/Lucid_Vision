@@ -64,7 +64,7 @@ The extension is designed to be efficient with system resources by only loading 
 pip install pexpect
 ```
 
-3. Update the transformers library using the cmd_yourOShere.sh/bat file (so either cmd_linux.sh, cmd_macos.sh, cmd_windows.bat, or cmd_wsl.bat) and entering the following lines.  If you run the update wizard after this point, it will overrite this update to transformers.  The newest transformes package has the libraries for paligemma, which the code needs to import regardless of wheather or not you are intending to use the model.
+3. Update the transformers library using the cmd_yourOShere.sh/bat file (so either cmd_linux.sh, cmd_macos.sh, cmd_windows.bat, or cmd_wsl.bat) and entering the following lines.  If you run the update wizard after this point, it will overrite this update to transformers.  The newest transformes package has the libraries for paligemma, which the code needs to import regardless of whether or not you are intending to use the model.
 
 ```
 pip uninstall transformers -y
@@ -139,7 +139,7 @@ Okay the extension can do many different things with varying levels of difficult
 
 Starting out with the basics and understanding how to talk with your vision models:
 
-Scroll down past where you would normally type something to the LLM
+Scroll down past where you would normally type something to the LLM, you do not need a large language model loaded to use this function.
 ![image](https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/227ff483-5041-46a7-9b5b-a8f9dd3c673e)
 
 Start out by interacting with the vision models without involvement of a seperate LLM model by pressing the `Ask Vision Model` button
@@ -151,3 +151,7 @@ Do this with every model you intend on using, upload a picture, and ask a questi
 
 
 ## **ADVANCED:**
+
+Okay, this is why I built the extension in the first place; direct interaction with the vision model was actually an afterthought after I had all the code working.
+
+This is how to use your favorite LLM WITH an additional Vision Model, I wanted a way to give my LLMs eyes essentially.  I realize that good multimodal models are likely around the corner, but until they match the intellect of very good LLMs, I'd rather have a different vision model work with a good LLM.
