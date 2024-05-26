@@ -1,4 +1,4 @@
-Experimental, and am currently working to improve the code; but it may work for most.
+Experimental, and I am currently working to improve the code; but it may work for most.
 
 Todo:
 
