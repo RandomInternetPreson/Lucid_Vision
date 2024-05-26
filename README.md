@@ -1,3 +1,5 @@
+WIP DO NOT DOWNLOAD YET
+
 To accurately proportion credit:
 
 WizardLM-2-8x22B (quantized with exllamaV2 to 8bit precision) = 90% of all the work done in this repo.  That model wrote 100% of all the code and the introduction to this repo. 
@@ -146,3 +148,6 @@ Start out by interacting with the vision models without involvement of a seperat
 **Note paligemma requries a little diffent type prompting sometimes, read the blog on how to inference with it: https://huggingface.co/blog/paligemma**
 
 Do this with every model you intend on using, upload a picture, and ask a question 
+
+
+## **ADVANCED:**
