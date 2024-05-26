@@ -1,0 +1,11 @@
+{
+    "image_history_dir": "(fill_In)/extensions/Lucid_Vision/ImageHistory/",
+    "python_exec": "(fill_In)/installer_files/env/bin/python",
+    "cli_script_path": "(fill_In)/repositories/DeepSeek-VL/cli_chat.py",
+    "model_path": "(fill_In)",
+    "cuda_visible_devices": "0",
+    "default_vision_model": "phiVision",
+	"phiVision_model_id": "(fill_In)",
+    "paligemma_model_id": "(fill_In)",
+    "paligemma_cpu_model_id": "(fill_In)"
+}
