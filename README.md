@@ -1,3 +1,6 @@
+
+*Updated script.py and config file, model was not previously loading to the user assigned gpu
+
 Experimental, and I am currently working to improve the code; but it may work for most.
 
 Todo:
