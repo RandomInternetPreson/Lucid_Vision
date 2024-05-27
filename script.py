@@ -128,23 +128,7 @@ def ui():
         ]
     )
 
-# Function to load the PaliGemma CPU model and processor
-def load_paligemma_cpu_model():
-    global paligemma_cpu_model, paligemma_cpu_processor
-    paligemma_cpu_model = PaliGemmaForConditionalGeneration.from_pretrained(
-        paligemma_model_id,
-    ).eval()
-    paligemma_cpu_processor = AutoProcessor.from_pretrained(paligemma_model_id)
-    print("PaliGemma CPU model loaded on-demand.")
 
-# Function to unload the PaliGemma CPU model and processor
-def unload_paligemma_cpu_model():
-    global paligemma_cpu_model, paligemma_cpu_processor
-    if paligemma_cpu_model is not None:
-        # Delete the model and processor instances
-        del paligemma_cpu_model
-        del paligemma_cpu_processor
-        print("PaliGemma CPU model unloaded.")   
 
 # Global variable to store the selected vision model
 selected_vision_model = "phiVision"
@@ -210,9 +194,12 @@ unwanted_prefix_pattern = re.compile(
 # Function to load the PhiVision model and processor
 def load_phi_vision_model():
     global phiVision_model, phiVision_processor
+    # Extract the CUDA_VISIBLE_DEVICES setting from the config file
+    cuda_devices = config["cuda_visible_devices"]
+    # Load the PhiVision model and processor on-demand, specifying the device map
     phiVision_model = AutoModelForCausalLM.from_pretrained(
         phiVision_model_id,
-        device_map="cuda",
+        device_map={"": int(cuda_devices)},  # Use the specified CUDA device(s)
         trust_remote_code=True,
         torch_dtype="auto"
     )
@@ -233,6 +220,31 @@ def unload_phi_vision_model():
         torch.cuda.empty_cache()
         print("PhiVision model unloaded.")
 
+# Function to load the PaliGemma model and processor
+def load_paligemma_model():
+    global paligemma_model, paligemma_processor
+    # Extract the CUDA_VISIBLE_DEVICES setting from the config file
+    cuda_devices = config["cuda_visible_devices"]
+    # Load the PaliGemma model and processor on-demand, specifying the device map
+    paligemma_model = PaliGemmaForConditionalGeneration.from_pretrained(
+        paligemma_model_id,
+        device_map={"": int(cuda_devices)},  # Use the specified CUDA device(s)
+        torch_dtype=torch.bfloat16,
+        revision="bfloat16",
+    ).eval()
+    paligemma_processor = AutoProcessor.from_pretrained(paligemma_model_id)
+    print("PaliGemma model loaded on-demand.")
+
+# Function to unload the PaliGemma model and processor
+def unload_paligemma_model():
+    global paligemma_model, paligemma_processor
+    if paligemma_model is not None:
+        # Delete the model and processor instances
+        del paligemma_model
+        del paligemma_processor
+        # Clear the CUDA cache to free up VRAM
+        torch.cuda.empty_cache()
+        print("PaliGemma model unloaded.")
 
 # Function to modify the output from the LLM before it is displayed to the user
 def output_modifier(output, state, is_chat=False):
@@ -264,9 +276,14 @@ def output_modifier(output, state, is_chat=False):
             prompt = phiVision_processor.tokenizer.apply_chat_template(
                 messages, tokenize=False, add_generation_prompt=True
             )
+            
+            # Extract the CUDA_VISIBLE_DEVICES setting from the config file
+            cuda_devices = config["cuda_visible_devices"]
+            # Convert the CUDA_VISIBLE_DEVICES string to an integer (assuming a single device for simplicity)
+            cuda_device_index = int(cuda_devices)
 
             # Process the prompt and image to create model inputs
-            inputs = phiVision_processor(prompt, [image], return_tensors="pt").to("cuda:0")
+            inputs = phiVision_processor(prompt, [image], return_tensors="pt").to(f"cuda:{cuda_device_index}")
 
             # Define the generation arguments
             generation_args = {
@@ -313,7 +330,13 @@ def output_modifier(output, state, is_chat=False):
 
             # Prepare the prompt for the PaliGemma model using the user's question
             prompt = questions
-            model_inputs = paligemma_processor(text=prompt, images=image, return_tensors="pt").to(paligemma_model.device)
+            
+            # Extract the CUDA_VISIBLE_DEVICES setting from the config file
+            cuda_devices = config["cuda_visible_devices"]
+            # Convert the CUDA_VISIBLE_DEVICES string to an integer (assuming a single device for simplicity)
+            cuda_device_index = int(cuda_devices)
+            
+            model_inputs = paligemma_processor(text=prompt, images=image, return_tensors="pt").to(f"cuda:{cuda_device_index}")
             input_len = model_inputs["input_ids"].shape[-1]
 
             # Generate the response using the PaliGemma model
@@ -386,8 +409,13 @@ def process_with_vision_model(user_input, image, selected_model):
             prompt = phiVision_processor.tokenizer.apply_chat_template(
                 messages, tokenize=False, add_generation_prompt=True
             )
-            # Process the prompt and image to create model inputs
-            inputs = phiVision_processor(prompt, [img], return_tensors="pt").to("cuda:0")
+            # Extract the CUDA_VISIBLE_DEVICES setting from the config file
+            cuda_devices = config["cuda_visible_devices"]
+            # Convert the CUDA_VISIBLE_DEVICES string to an integer (assuming a single device for simplicity)
+            cuda_device_index = int(cuda_devices)
+            
+            # Prepare the model inputs and move them to the specified CUDA device
+            inputs = phiVision_processor(prompt, [image], return_tensors="pt").to(f"cuda:{cuda_device_index}")
             # Define the generation arguments
             generation_args = {
                 "max_new_tokens": 500,
@@ -428,7 +456,11 @@ def process_with_vision_model(user_input, image, selected_model):
         with Image.open(file_path) as img:
             # Prepare the prompt for the PaliGemma model using the user's question
             prompt = user_input
-            model_inputs = paligemma_processor(text=prompt, images=img, return_tensors="pt").to(paligemma_model.device)
+            # Extract the CUDA_VISIBLE_DEVICES setting from the config file
+            cuda_devices = config["cuda_visible_devices"]
+            # Convert the CUDA_VISIBLE_DEVICES string to an integer (assuming a single device for simplicity)
+            cuda_device_index = int(cuda_devices)
+            model_inputs = paligemma_processor(text=prompt, images=img, return_tensors="pt").to(f"cuda:{cuda_device_index}")
             input_len = model_inputs["input_ids"].shape[-1]
             # Generate the response using the PaliGemma model
             with torch.inference_mode():
