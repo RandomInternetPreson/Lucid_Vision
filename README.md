@@ -96,14 +96,14 @@ pip install transformers --upgrade --no-cache-dir
    
    Read this blog on how to inference with the model: https://huggingface.co/blog/paligemma
 
-9. Before using the extension you need to update the config file; open it in a text editor:
+9. Before using the extension you need to update the config file; open it in a text editor *Note No quotes around gpu #:
 ```
    {
     "image_history_dir": "(fill_In)/extensions/Lucid_Vision/ImageHistory/",
     "python_exec": "(fill_In)/installer_files/env/bin/python",
     "cli_script_path": "(fill_In)/repositories/DeepSeek-VL/cli_chat.py",
     "model_path": "(fill_In)",
-    "cuda_visible_devices": "0",
+    "cuda_visible_devices": 0,
     "default_vision_model": "phiVision",
     "phiVision_model_id": "(fill_In)",
     "paligemma_model_id": "(fill_In)",
@@ -120,7 +120,7 @@ Make note that you want to change / to \ if you are on Windows
     "python_exec": "/home/username/Desktop/oobLucidVision/text-generation-webui/installer_files/env/bin/python",
     "cli_script_path": "/home/username/Desktop/oobLucidVision/text-generation-webui/repositories/DeepSeek-VL/cli_chat.py",
     "model_path": "(fill_In)",  *This is the folder where your deepseekvl model is stored
-    "cuda_visible_devices": "0",
+    "cuda_visible_devices": 0,
     "default_vision_model": "phiVision",
     "phiVision_model_id": "(fill_In)", *This is the folder where your phi-3 vision model is stored
     "paligemma_model_id": "(fill_In)", *This is the folder where your paligemma vision model is stored
