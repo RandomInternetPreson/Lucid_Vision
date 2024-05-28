@@ -1,5 +1,8 @@
 Video Demo:
 
+https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/8879854b-06d8-49ad-836c-13c84eff6ac9
+
+Download the full demo video here:
 https://github.com/RandomInternetPreson/Lucid_Vision/blob/main/VideoDemo/Lucid_Vision_demoCompBig.mov
 
 *Updated script.py and config file, model was not previously loading to the user assigned gpu
