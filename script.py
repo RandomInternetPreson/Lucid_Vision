@@ -1,22 +1,16 @@
 # pip install pexpect
-import gradio as gr
-import os
 import json
+import os
 import re
-import subprocess
-import time
-import pexpect
-from pathlib import Path
 from datetime import datetime  # Import datetime for timestamp generation
-from PIL import Image 
-import requests 
-from transformers import AutoModelForCausalLM 
-from transformers import AutoProcessor 
+from pathlib import Path
+
+import gradio as gr
+import pexpect
 import torch
-from transformers import AutoProcessor, PaliGemmaForConditionalGeneration
 from PIL import Image
-import requests
-import torch
+from transformers import AutoModelForCausalLM, AutoModel, AutoTokenizer
+from transformers import AutoProcessor, PaliGemmaForConditionalGeneration
 
 
 # Load configuration settings from a JSON file
@@ -25,6 +19,7 @@ def load_config():
         # Read and parse the JSON configuration file
         config = json.load(config_file)
     return config
+
 
 # Load the configuration settings at the module level
 config = load_config()
@@ -35,6 +30,7 @@ image_history_dir = Path(config["image_history_dir"])
 # Ensure the directory exists, creating it if necessary
 image_history_dir.mkdir(parents=True, exist_ok=True)
 
+
 # Function to generate a timestamped filename for saved images
 def get_timestamped_filename(extension=".png"):
     # Generate a timestamp in the format YYYYMMDD_HHMMSS
@@ -42,8 +38,10 @@ def get_timestamped_filename(extension=".png"):
     # Return a formatted file name with the timestamp
     return f"image_{timestamp}{extension}"
 
+
 # Global variable to store the file path of the selected image
 selected_image_path = None
+
 
 # Function to modify the user input before it is processed by the LLM
 def input_modifier(user_input, state):
@@ -59,6 +57,7 @@ def input_modifier(user_input, state):
         return combined_input
     # If no image is selected, return the user input as is
     return user_input
+
 
 # Function to handle image upload and store the file path
 def save_and_print_image_path(image):
@@ -77,6 +76,7 @@ def save_and_print_image_path(image):
         # Print a message if no image is selected
         print("No image selected yet.")
 
+
 # Function to create the Gradio UI components with the new direct vision model interaction elements
 def ui():
     # Create an image input component for the Gradio UI
@@ -89,17 +89,20 @@ def ui():
     )
 
     # Create a text field for user input to the vision model
-    user_input_to_vision_model = gr.Textbox(label="Type your question or prompt for the vision model", lines=2, placeholder="Enter your text here...")
+    user_input_to_vision_model = gr.Textbox(label="Type your question or prompt for the vision model", lines=2,
+                                            placeholder="Enter your text here...")
 
     # Create a button to trigger the vision model processing
     vision_model_button = gr.Button(value="Ask Vision Model")
 
     # Create a text field to display the vision model's response
-    vision_model_response_output = gr.Textbox(label="Vision Model Response", lines=5, placeholder="Response will appear here...")
+    vision_model_response_output = gr.Textbox(label="Vision Model Response", lines=5,
+                                              placeholder="Response will appear here...")
 
     # Add radio buttons for vision model selection
     vision_model_selection = gr.Radio(
-        choices=["phiVision", "DeepSeek", "paligemma", "paligemma_cpu"],  # Added "paligemma_cpu" as a choice
+        choices=["phiVision", "DeepSeek", "paligemma", "paligemma_cpu", "minicpm_llama3"],
+        # Added "paligemma_cpu" as a choice
         value=config["default_vision_model"],
         label="Select Vision Model"
     )
@@ -128,6 +131,7 @@ def ui():
         ]
     )
 
+
 # Function to load the PaliGemma CPU model and processor
 def load_paligemma_cpu_model():
     global paligemma_cpu_model, paligemma_cpu_processor
@@ -137,6 +141,7 @@ def load_paligemma_cpu_model():
     paligemma_cpu_processor = AutoProcessor.from_pretrained(paligemma_model_id)
     print("PaliGemma CPU model loaded on-demand.")
 
+
 # Function to unload the PaliGemma CPU model and processor
 def unload_paligemma_cpu_model():
     global paligemma_cpu_model, paligemma_cpu_processor
@@ -144,10 +149,13 @@ def unload_paligemma_cpu_model():
         # Delete the model and processor instances
         del paligemma_cpu_model
         del paligemma_cpu_processor
-        print("PaliGemma CPU model unloaded.")   
+        print("PaliGemma CPU model unloaded.")
 
-# Global variable to store the selected vision model
+    # Global variable to store the selected vision model
+
+
 selected_vision_model = "phiVision"
+
 
 # Function to update the selected vision model and load the corresponding model
 def update_vision_model(model_name):
@@ -155,13 +163,14 @@ def update_vision_model(model_name):
     selected_vision_model = model_name
     return model_name
 
+
 # Define the model ID for PhiVision using the configuration setting
 phiVision_model_id = config["phiVision_model_id"]
 
 # Define the model ID for PaliGemma using the configuration setting
 paligemma_model_id = config["paligemma_model_id"]
-    
 
+minicpm_llama3_model_id = config["minicpm_llama3_model_id"]
 
 # Main entry point for the Gradio interface
 if __name__ == "__main__":
@@ -177,13 +186,13 @@ file_location_pattern = re.compile(r"File location: (.+)$", re.MULTILINE)
 # Define a regular expression pattern to match and remove unwanted initial text
 unwanted_initial_text_pattern = re.compile(r".*?prod\(dim=0\)\r\n", re.DOTALL)
 
-
 # Define a regular expression pattern to match and remove unwanted prefixes from DeepSeek responses
 # This pattern should be updated to match the new, platform-independent file path format
 unwanted_prefix_pattern = re.compile(
     r"^" + re.escape(str(image_history_dir)) + r"[^ ]+\.png\s*Assistant: ",
     re.MULTILINE
 )
+
 
 # Function to load the PhiVision model and processor
 def load_phi_vision_model():
@@ -203,6 +212,7 @@ def load_phi_vision_model():
     )
     print("PhiVision model loaded on-demand.")
 
+
 # Function to unload the PhiVision model and processor
 def unload_phi_vision_model():
     global phiVision_model, phiVision_processor
@@ -213,6 +223,37 @@ def unload_phi_vision_model():
         # Clear the CUDA cache to free up VRAM
         torch.cuda.empty_cache()
         print("PhiVision model unloaded.")
+
+
+def load_minicpm_llama_model():
+    global minicpm_llama_model, minicpm_llama_tokenizer
+    cuda_devices = config["cuda_visible_devices"]
+    minicpm_llama_model = AutoModel.from_pretrained(
+        minicpm_llama3_model_id,
+        device_map={"": int(cuda_devices)},  # Use the specified CUDA device(s)
+        trust_remote_code=True,
+        torch_dtype=torch.bfloat16,
+        do_sample=True
+    ).eval()
+    minicpm_llama_tokenizer = AutoTokenizer.from_pretrained(
+        minicpm_llama3_model_id,
+        trust_remote_code=True,
+        do_sample=True
+    )
+    print("MiniCPM-Llama3 model loaded on-demand.")
+
+
+global minicpm_llama_model, minicpm_llama_tokenizer
+
+
+def unload_minicpm_llama_model():
+    global minicpm_llama_model, minicpm_llama_tokenizer
+    if minicpm_llama_model is not None:
+        del minicpm_llama_model
+        del minicpm_llama_tokenizer
+        torch.cuda.empty_cache()
+        print("MiniCPM-Llama3 model unloaded.")
+
 
 # Function to load the PaliGemma model and processor
 def load_paligemma_model():
@@ -228,6 +269,7 @@ def load_paligemma_model():
     ).eval()
     paligemma_processor = AutoProcessor.from_pretrained(paligemma_model_id)
     print("PaliGemma model loaded on-demand.")
+
 
 # Function to unload the PaliGemma model and processor
 def unload_paligemma_model():
@@ -271,7 +313,7 @@ def output_modifier(output, state, is_chat=False):
             prompt = phiVision_processor.tokenizer.apply_chat_template(
                 messages, tokenize=False, add_generation_prompt=True
             )
-            
+
             # Extract the CUDA_VISIBLE_DEVICES setting from the config file
             cuda_devices = config["cuda_visible_devices"]
             # Convert the CUDA_VISIBLE_DEVICES string to an integer (assuming a single device for simplicity)
@@ -315,7 +357,7 @@ def output_modifier(output, state, is_chat=False):
             cleaned_responses = unwanted_prefix_pattern.sub("", cleaned_responses)
 
             vision_model_response = cleaned_responses
-            
+
         elif selected_vision_model == "paligemma":
             # Load the PaliGemma model and processor on-demand
             load_paligemma_model()
@@ -325,13 +367,14 @@ def output_modifier(output, state, is_chat=False):
 
             # Prepare the prompt for the PaliGemma model using the user's question
             prompt = questions
-            
+
             # Extract the CUDA_VISIBLE_DEVICES setting from the config file
             cuda_devices = config["cuda_visible_devices"]
             # Convert the CUDA_VISIBLE_DEVICES string to an integer (assuming a single device for simplicity)
             cuda_device_index = int(cuda_devices)
-            
-            model_inputs = paligemma_processor(text=prompt, images=image, return_tensors="pt").to(f"cuda:{cuda_device_index}")
+
+            model_inputs = paligemma_processor(text=prompt, images=image, return_tensors="pt").to(
+                f"cuda:{cuda_device_index}")
             input_len = model_inputs["input_ids"].shape[-1]
 
             # Generate the response using the PaliGemma model
@@ -346,19 +389,19 @@ def output_modifier(output, state, is_chat=False):
 
             # Unload the PaliGemma model and processor after generating the response
             unload_paligemma_model()
-            
+
         elif selected_vision_model == "paligemma_cpu":
             # Load the PaliGemma CPU model and processor on-demand
             load_paligemma_cpu_model()
-    
+
             # Load the image using PIL
             image = Image.open(file_path)
-    
+
             # Prepare the prompt for the PaliGemma CPU model using the user's question
             prompt = questions
             model_inputs = paligemma_cpu_processor(text=prompt, images=image, return_tensors="pt")
             input_len = model_inputs["input_ids"].shape[-1]
-    
+
             # Generate the response using the PaliGemma CPU model
             with torch.inference_mode():
                 generation = paligemma_cpu_model.generate(
@@ -368,16 +411,46 @@ def output_modifier(output, state, is_chat=False):
                 )
                 generation = generation[0][input_len:]
                 vision_model_response = paligemma_cpu_processor.decode(generation, skip_special_tokens=True)
-    
-            # Unload the PaliGemma CPU model and processor after generating the response
-            unload_paligemma_cpu_model()  
 
+            # Unload the PaliGemma CPU model and processor after generating the response
+            unload_paligemma_cpu_model()
+
+        elif selected_vision_model == "minicpm_llama3":
+            vision_model_response = generate_minicpm_llama3(file_path, questions)
 
         # Append the vision model's responses to the output
-        output_with_responses = f"{output}\n\nVision Model Responses:\n{vision_model_response}"     
+        output_with_responses = f"{output}\n\nVision Model Responses:\n{vision_model_response}"
         return output_with_responses
     # If no file location is found, return the output as is
     return output
+
+
+def generate_minicpm_llama3(file_path, questions):
+    load_minicpm_llama_model()
+    image = Image.open(file_path).convert("RGB")
+    messages = [
+        {"role": "user", "content": f"{questions}"}
+    ]
+    cuda_devices = config["cuda_visible_devices"]
+    cuda_device_index = int(cuda_devices)
+    minicpm_llama_model.to(f"cuda:{cuda_device_index}")
+    generation_args = {
+        "max_new_tokens": 896,
+        "repetition_penalty": 1.05,
+        "num_beams": 3,
+        "top_p": 0.8,
+        "top_k": 1,
+        "temperature": 0.7,
+        "sampling": True,
+    }
+    vision_model_response = minicpm_llama_model.chat(
+        image=image,
+        msgs=messages,
+        tokenizer=minicpm_llama_tokenizer,
+        **generation_args
+    )
+    unload_minicpm_llama_model()
+    return vision_model_response
 
 
 # Function to process the user's input text and selected image with the vision model
@@ -408,7 +481,7 @@ def process_with_vision_model(user_input, image, selected_model):
             cuda_devices = config["cuda_visible_devices"]
             # Convert the CUDA_VISIBLE_DEVICES string to an integer (assuming a single device for simplicity)
             cuda_device_index = int(cuda_devices)
-            
+
             # Prepare the model inputs and move them to the specified CUDA device
             inputs = phiVision_processor(prompt, [image], return_tensors="pt").to(f"cuda:{cuda_device_index}")
             # Define the generation arguments
@@ -442,7 +515,7 @@ def process_with_vision_model(user_input, image, selected_model):
         cleaned_responses = unwanted_initial_text_pattern.sub("", vision_model_responses)
         cleaned_responses = unwanted_prefix_pattern.sub("", cleaned_responses)
         vision_model_response = cleaned_responses
-        
+
 
     elif selected_model == "paligemma":
         # Load the PaliGemma model and processor on-demand
@@ -455,7 +528,8 @@ def process_with_vision_model(user_input, image, selected_model):
             cuda_devices = config["cuda_visible_devices"]
             # Convert the CUDA_VISIBLE_DEVICES string to an integer (assuming a single device for simplicity)
             cuda_device_index = int(cuda_devices)
-            model_inputs = paligemma_processor(text=prompt, images=img, return_tensors="pt").to(f"cuda:{cuda_device_index}")
+            model_inputs = paligemma_processor(text=prompt, images=img, return_tensors="pt").to(
+                f"cuda:{cuda_device_index}")
             input_len = model_inputs["input_ids"].shape[-1]
             # Generate the response using the PaliGemma model
             with torch.inference_mode():
@@ -490,8 +564,12 @@ def process_with_vision_model(user_input, image, selected_model):
         # Unload the PaliGemma CPU model and processor after generating the response
         unload_paligemma_cpu_model()
 
+    elif selected_model == "minicpm_llama3":
+        vision_model_response = generate_minicpm_llama3(file_path, user_input)
+
     # Return the cleaned-up response from the vision model
     return vision_model_response
+
 
 # Function to modify the chat history before it is used for text generation
 def history_modifier(history):
@@ -533,6 +611,7 @@ def history_modifier(history):
                             # Append the content after the full match string from the "visible" text
                             history["internal"][internal_index][1] += after_match
     return history
+
 
 # Function to send questions to the vision model CLI and collect the responses
 def send_to_vision_model_cli(file_path, questions):
