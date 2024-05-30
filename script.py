@@ -154,14 +154,15 @@ def unload_paligemma_cpu_model():
     # Global variable to store the selected vision model
 
 
-selected_vision_model = "phiVision"
+selected_vision_model = config["default_vision_model"]
 
 
 # Function to update the selected vision model and load the corresponding model
 def update_vision_model(model_name):
-    global selected_vision_model, phiVision_model, phiVision_processor
+    global selected_vision_model
     selected_vision_model = model_name
     return model_name
+
 
 
 # Define the model ID for PhiVision using the configuration setting
