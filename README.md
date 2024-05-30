@@ -15,7 +15,6 @@ Todo:
 
 * Right now the temp setting and parameters for each model are coded in the .py script, I intend to bring these to the UI
 * Make it comptable with Alltalk, right now each image directory is printed out and this will be read out loud by Alltalk
-* Update minicpm-mmala3-v-2_5 with a 4bit inference setting; the model works well and their github has a 4bit model: https://github.com/OpenBMB/MiniCPM-V?tab=readme-ov-file#inference
 
 To accurately proportion credit (original repo creation):
 
