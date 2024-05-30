@@ -226,22 +226,38 @@ def unload_phi_vision_model():
         print("PhiVision model unloaded.")
 
 
+# Function to load the MiniCPM-Llama3 model and tokenizer
 def load_minicpm_llama_model():
-    global minicpm_llama_model, minicpm_llama_tokenizer
-    cuda_devices = config["cuda_visible_devices"]
-    minicpm_llama_model = AutoModel.from_pretrained(
-        minicpm_llama3_model_id,
-        device_map={"": int(cuda_devices)},  # Use the specified CUDA device(s)
-        trust_remote_code=True,
-        torch_dtype=torch.bfloat16,
-        do_sample=True
-    ).eval()
-    minicpm_llama_tokenizer = AutoTokenizer.from_pretrained(
-        minicpm_llama3_model_id,
-        trust_remote_code=True,
-        do_sample=True
-    )
-    print("MiniCPM-Llama3 model loaded on-demand.")
+   global minicpm_llama_model, minicpm_llama_tokenizer
+   # Extract the model ID from the config file
+   model_id = config["minicpm_llama3_model_id"]
+   # Check if the model ID contains the phrase "int4"
+   if "int4" in model_id:
+       # Load the 4-bit quantized model and tokenizer
+       minicpm_llama_model = AutoModel.from_pretrained(
+           model_id,
+           trust_remote_code=True,
+           torch_dtype=torch.float16  # Use float16 as per the example code for 4-bit models
+       ).eval()
+       minicpm_llama_tokenizer = AutoTokenizer.from_pretrained(
+           model_id,
+           trust_remote_code=True
+       )
+       # Print a message indicating that the 4-bit model is loaded
+       print("MiniCPM-Llama3 4-bit quantized model loaded on-demand.")
+   else:
+       # Load the standard model and tokenizer
+       minicpm_llama_model = AutoModel.from_pretrained(
+           model_id,
+           trust_remote_code=True,
+           torch_dtype=torch.bfloat16  # Use bfloat16 for standard models
+       ).eval()
+       minicpm_llama_tokenizer = AutoTokenizer.from_pretrained(
+           model_id,
+           trust_remote_code=True
+       )
+       # Print a message indicating that the standard model is loaded
+       print("MiniCPM-Llama3 standard model loaded on-demand.")
 
 
 global minicpm_llama_model, minicpm_llama_tokenizer
@@ -426,32 +442,55 @@ def output_modifier(output, state, is_chat=False):
     return output
 
 
+# Function to generate a response using the MiniCPM-Llama3 model
 def generate_minicpm_llama3(file_path, questions):
-    load_minicpm_llama_model()
-    image = Image.open(file_path).convert("RGB")
-    messages = [
-        {"role": "user", "content": f"{questions}"}
-    ]
-    cuda_devices = config["cuda_visible_devices"]
-    cuda_device_index = int(cuda_devices)
-    minicpm_llama_model.to(f"cuda:{cuda_device_index}")
-    generation_args = {
-        "max_new_tokens": 896,
-        "repetition_penalty": 1.05,
-        "num_beams": 3,
-        "top_p": 0.8,
-        "top_k": 1,
-        "temperature": 0.7,
-        "sampling": True,
-    }
-    vision_model_response = minicpm_llama_model.chat(
-        image=image,
-        msgs=messages,
-        tokenizer=minicpm_llama_tokenizer,
-        **generation_args
-    )
-    unload_minicpm_llama_model()
-    return vision_model_response
+  # Load the 4-bit or standard model based on the model ID
+  load_minicpm_llama_model()
+  # Load the image using PIL
+  image = Image.open(file_path).convert("RGB")
+  # Prepare the chat messages
+  messages = [
+      {"role": "user", "content": f"{questions}"}
+  ]
+  # Define the generation arguments
+  generation_args = {
+      "max_new_tokens": 896,
+      "repetition_penalty": 1.05,
+      "num_beams": 3,
+      "top_p": 0.8,
+      "top_k": 1,
+      "temperature": 0.7,
+      "sampling": True,
+  }
+  # Check if the model ID contains the phrase "int4"
+  if "int4" in config["minicpm_llama3_model_id"]:
+      # Enable streaming for the 4-bit model
+      generation_args["stream"] = False
+      # Use the model.chat method with streaming enabled
+      vision_model_response = ""
+      for new_text in minicpm_llama_model.chat(
+         image=image,
+         msgs=messages,
+         tokenizer=minicpm_llama_tokenizer,
+         **generation_args
+     ):
+         vision_model_response += new_text
+         print(new_text, flush=True, end='')
+  else:
+      # For non-4bit models, move the model to the specified CUDA device
+      cuda_devices = config["cuda_visible_devices"]
+      cuda_device_index = int(cuda_devices)
+      minicpm_llama_model.to(f"cuda:{cuda_device_index}")
+      # Use the model.chat method without streaming for the standard model
+      vision_model_response = minicpm_llama_model.chat(
+         image=image,
+         msgs=messages,
+         tokenizer=minicpm_llama_tokenizer,
+         **generation_args
+     )
+  # Unload the model and tokenizer after generating the response
+  unload_minicpm_llama_model()
+  return vision_model_response
 
 
 # Function to process the user's input text and selected image with the vision model
