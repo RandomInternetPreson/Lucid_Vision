@@ -7,5 +7,6 @@
     "default_vision_model": "phiVision",
 	"phiVision_model_id": "(fill_In)",
     "paligemma_model_id": "(fill_In)",
-    "paligemma_cpu_model_id": "(fill_In)"
+    "paligemma_cpu_model_id": "(fill_In)",
+    "minicpm_llama3_model_id": "(fill_In)"
 }
