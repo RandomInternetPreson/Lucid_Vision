@@ -5,8 +5,9 @@ https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/8879854b-06d
 Download the full demo video here:
 https://github.com/RandomInternetPreson/Lucid_Vision/blob/main/VideoDemo/Lucid_Vision_demoCompBig.mov
 
-*Update May 30 2024, Lucid_Vision now supports MiniCPM-Llama3-V-2_5, thanks to https://github.com/justin-luoma
-*Updated script.py and config file, model was not previously loading to the user assigned gpu
+* Update May 30 2024, Lucid_Vision now supports MiniCPM-Llama3-V-2_5, thanks to https://github.com/justin-luoma
+
+* Updated script.py and config file, model was not previously loading to the user assigned gpu
 
 Experimental, and I am currently working to improve the code; but it may work for most.
 
