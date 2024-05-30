@@ -5,7 +5,7 @@ https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/8879854b-06d
 Download the full demo video here:
 https://github.com/RandomInternetPreson/Lucid_Vision/blob/main/VideoDemo/Lucid_Vision_demoCompBig.mov
 
-* Update May 30 2024, Lucid_Vision now supports MiniCPM-Llama3-V-2_5, thanks to https://github.com/justin-luoma
+* Update May 30 2024, Lucid_Vision now supports MiniCPM-Llama3-V-2_5, thanks to https://github.com/justin-luoma.  Additionally WizardLM-2-8x22B added the functionality to load in the MiniCPM 4-bit model.
 
 * Updated script.py and config file, model was not previously loading to the user assigned gpu
 
@@ -109,7 +109,13 @@ pip install transformers --upgrade --no-cache-dir
 
 8. If you want to use MiniCPM-Llama3-V-2_5, download it here: https://huggingface.co/openbmb/MiniCPM-Llama3-V-2_5
 
-9. Before using the extension you need to update the config file; open it in a text editor *Note No quotes around gpu #:
+   The 4-bit verison of the model can be downloaded here: https://huggingface.co/openbmb/MiniCPM-Llama3-V-2_5-int4
+
+   **Notes about 4-bit MiniCPM:**
+   *  It might not look like the model fully unloads from vram, but it does and the vram will be reclaimed if another program needs it
+   *  Your directory needs to have the term "int4" in it, this is how the extension identifies the 4bit nature of the model
+
+10. Before using the extension you need to update the config file; open it in a text editor *Note No quotes around gpu #:
 ```
    {
     "image_history_dir": "(fill_In)/extensions/Lucid_Vision/ImageHistory/",
