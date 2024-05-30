@@ -5,6 +5,7 @@ https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/8879854b-06d
 Download the full demo video here:
 https://github.com/RandomInternetPreson/Lucid_Vision/blob/main/VideoDemo/Lucid_Vision_demoCompBig.mov
 
+*Update May 30 2024, Lucid_Vision now supports MiniCPM-Llama3-V-2_5, thanks to https://github.com/justin-luoma
 *Updated script.py and config file, model was not previously loading to the user assigned gpu
 
 Experimental, and I am currently working to improve the code; but it may work for most.
@@ -41,7 +42,7 @@ Welcome to the Lucid Vision Extension repository! This extension enhances the ca
 
 ## Features
 
-* Multi-Model Support: Interact with different vision models, including PhiVision, DeepSeek, and PaliGemma, with options for both GPU and CPU inference.
+* Multi-Model Support: Interact with different vision models, including PhiVision, DeepSeek, MiniCPM-Llama3-V-2_5, and PaliGemma, with options for both GPU and CPU inference.
 
 * On-Demand Loading: Vision models are loaded into memory only when needed to answer a question, optimizing resource usage.
 
@@ -104,6 +105,8 @@ pip install transformers --upgrade --no-cache-dir
 7. If you want to use paligemma-3b, download it here: https://huggingface.co/google/paligemma-3b-ft-cococap-448 (this is just one out of many fine-tunes google provides)
    
    Read this blog on how to inference with the model: https://huggingface.co/blog/paligemma
+
+8. If you want to use MiniCPM-Llama3-V-2_5, download it here: https://huggingface.co/openbmb/MiniCPM-Llama3-V-2_5
 
 9. Before using the extension you need to update the config file; open it in a text editor *Note No quotes around gpu #:
 ```
