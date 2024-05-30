@@ -126,7 +126,8 @@ pip install transformers --upgrade --no-cache-dir
     "default_vision_model": "phiVision",
     "phiVision_model_id": "(fill_In)",
     "paligemma_model_id": "(fill_In)",
-    "paligemma_cpu_model_id": "(fill_In)"
+    "paligemma_cpu_model_id": "(fill_In)",
+    "minicpm_llama3_model_id": "(fill_In)"
    }
 ```
 If your install directory is /home/username/Desktop/oobLucidVision/text-generation-webui/  the config file will look like this for example:
@@ -143,7 +144,8 @@ Make note that you want to change / to \ if you are on Windows
     "default_vision_model": "phiVision",
     "phiVision_model_id": "(fill_In)", *This is the folder where your phi-3 vision model is stored
     "paligemma_model_id": "(fill_In)", *This is the folder where your paligemma vision model is stored
-    "paligemma_cpu_model_id": "(fill_In)" *This is the folder where your paligemma vision model is stored
+    "paligemma_cpu_model_id": "(fill_In)", *This is the folder where your paligemma vision model is stored
+    "minicpm_llama3_model_id": "(fill_In)" *This is the folder where your paligemma vision model is stored, the model can either be the normal fp16 or 4-bit version
    }
 ```
 
