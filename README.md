@@ -16,7 +16,7 @@ Todo:
 * Right now the temp setting and parameters for each model are coded in the .py script, I intend to bring these to the UI
 * Make it comptable with Alltalk, right now each image directory is printed out and this will be read out loud by Alltalk
 
-To accurately proportion credit:
+To accurately proportion credit (original repo creation):
 
 WizardLM-2-8x22B (quantized with exllamaV2 to 8bit precision) = 90% of all the work done in this repo.  That model wrote 100% of all the code and most of the introduction to this repo. 
 
