@@ -11,7 +11,7 @@ https://github.com/RandomInternetPreson/Lucid_Vision/blob/main/VideoDemo/Lucid_V
      * Really cleaned up the code, it is much better organized now.
      * Added the ability to switch which gpu loads the vision model in the UI.
  
-* Bonus Update for May 31 2024, WizardLM-2-8x22B and I figured out how to prevent Alltalk from reading the file directory locations!! 
+* Bonus Update for May 31 2024, WizardLM-2-8x22B and I figured out how to prevent Alltalk from reading the file directory locations!! https://github.com/RandomInternetPreson/Lucid_Vision/tree/main?tab=readme-ov-file#to-work-with-alltalk
   
 * Update May 30 2024, Lucid_Vision now supports MiniCPM-Llama3-V-2_5, thanks to https://github.com/justin-luoma.  Additionally WizardLM-2-8x22B added the functionality to load in the MiniCPM 4-bit model.
 
