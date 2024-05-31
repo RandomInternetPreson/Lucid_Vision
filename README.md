@@ -5,6 +5,12 @@ https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/8879854b-06d
 Download the full demo video here:
 https://github.com/RandomInternetPreson/Lucid_Vision/blob/main/VideoDemo/Lucid_Vision_demoCompBig.mov
 
+* Update May 31 2024, many thanks to https://github.com/justin-luoma, they have made several recent updates to the code, now merged with this repo.
+     * Removed the need to communicate with deepseek via the cli, this removes the only extra dependency needed to run Lucid_Vision.
+     * Reduced the number of entries needed for the config file.
+     * Really cleaned up the code, it is much better organized now.
+     * Added the ability to switch which gpu loads the vision model in the UI.
+  
 * Update May 30 2024, Lucid_Vision now supports MiniCPM-Llama3-V-2_5, thanks to https://github.com/justin-luoma.  Additionally WizardLM-2-8x22B added the functionality to load in the MiniCPM 4-bit model.
 
 * Updated script.py and config file, model was not previously loading to the user assigned gpu
@@ -55,13 +61,13 @@ Welcome to the Lucid Vision Extension repository! This extension enhances the ca
 
 ## How It Works
 
-The Lucid Vision Extension operates by intercepting and modifying user input and output within the textgen-webui framework. When a user uploads an image and asks a question, the extension appends a special trigger phrase ("File location") and extracts the associated file path and question.
+The Lucid Vision Extension operates by intercepting and modifying user input and output within the textgen-webui framework. When a user uploads an image and asks a question, the extension appends a special trigger phrase ("File location:") and extracts the associated file path and question.
 
 So if a user enters text into the "send a message" field and has a new picture uploaded into the Lucid_Vision ui, what will happen behind the scenes is the at the user message will be appended with the "File Location: (file location)" Trigger phrase, at which point the LLM will see this and understand that it needs to reply back with questions about the image, and that those questions are being sent to a vison model.
 
 The cool thing is that let's say later in the conversation you want to know something specific about a previous picture, all you need to do is ask your LLM, YOU DO NOT NEED TO REUPLOAD THE PICTURE, the LLM should be able to interact with the extension on its own after you uploaded your first picture.
 
-Depending on the selected vision model, the extension either sends a command to the model's command-line interface (for DeepSeek) or directly interacts with the model's Python API (for PhiVision and PaliGemma) to generate a response. The response is then appended to the chat history, providing the user with detailed insights about the image.
+The selected vision directly interacts with the model's Python API to generate a response. The response is then appended to the chat history, providing the user with detailed insights about the image.
 
 The extension is designed to be efficient with system resources by only loading the vision models into memory when they are actively being used to process a question. After generating a response, the models are immediately unloaded to free up memory and GPU VRAM.
 
@@ -72,14 +78,6 @@ The extension is designed to be efficient with system resources by only loading 
    
 (Note, a couple months ago gradio had a massive update.  For me, this has caused a lot of glitches and errors with extensions; I've briefly tested the Lucid_Vision extension in the newest implementation of textgen and it will work.  However, I was getting timeout popups when vision models were loading for the first time, gradio wasn't waiting for the response from the model upon first load. After a model is loaded once, it is saved in cpu ram cache (this doesn't actively use your ram, it just uses what is free to keep the models in memory so they are quickly reloaded into gpu ram if necessary) and gradio doesn't seem to timeout as often.  The slightly older version of textgen that I've edited does not experience this issue)
 
-2. If you want to use the update wizard, right now would be the time to install the requirements for Lucid_Vision with the update wizard; so install lucid vision as you normally would any other extension.
-   
-2a. If you want just want to install the one extra dependency Lucid_Vision requires, then using the cmd_yourOShere.sh/bat file (so either cmd_linux.sh, cmd_macos.sh, cmd_windows.bat, or cmd_wsl.bat) and entering the following line.
-
-```
-pip install pexpect
-```
-
 3. Update the transformers library using the cmd_yourOShere.sh/bat file (so either cmd_linux.sh, cmd_macos.sh, cmd_windows.bat, or cmd_wsl.bat) and entering the following lines.  If you run the update wizard after this point, it will overrite this update to transformers.  The newest transformers package has the libraries for paligemma, which the code needs to import regardless of whether or not you are intending to use the model.
 
 ```
@@ -88,7 +86,9 @@ pip uninstall transformers -y
 pip install transformers --upgrade --no-cache-dir
 ```
 
-4. Install DeepseekVL if you intend on using that model
+## Model Information
+
+4. Install **DeepseekVL** if you intend on using that model
    
    Clone the repo: https://github.com/deepseek-ai/DeepSeek-VL into the `repositories` folder of your textgen install
 
@@ -101,34 +101,32 @@ pip install transformers --upgrade --no-cache-dir
    
    They have different and smaller models to choose from: https://github.com/deepseek-ai/DeepSeek-VL?tab=readme-ov-file#3-model-downloads
 
-6. If you want to use Phi-3-vision-128k-instruct, download it here: https://huggingface.co/microsoft/Phi-3-vision-128k-instruct
+6. If you want to use **Phi-3-vision-128k-instruct**, download it here: https://huggingface.co/microsoft/Phi-3-vision-128k-instruct
 
-7. If you want to use paligemma-3b, download it here: https://huggingface.co/google/paligemma-3b-ft-cococap-448 (this is just one out of many fine-tunes google provides)
+7. If you want to use **paligemma-3b**, download it here: https://huggingface.co/google/paligemma-3b-ft-cococap-448 (this is just one out of many fine-tunes google provides)
    
    Read this blog on how to inference with the model: https://huggingface.co/blog/paligemma
 
-8. If you want to use MiniCPM-Llama3-V-2_5, download it here: https://huggingface.co/openbmb/MiniCPM-Llama3-V-2_5
+8. If you want to use **MiniCPM-Llama3-V-2_5**, download it here: https://huggingface.co/openbmb/MiniCPM-Llama3-V-2_5
 
-   The 4-bit verison of the model can be downloaded here: https://huggingface.co/openbmb/MiniCPM-Llama3-V-2_5-int4
+   The **4-bit** verison of the model can be downloaded here: https://huggingface.co/openbmb/MiniCPM-Llama3-V-2_5-int4
 
    **Notes about 4-bit MiniCPM:**
    *  It might not look like the model fully unloads from vram, but it does and the vram will be reclaimed if another program needs it
-   *  Your directory needs to have the term "int4" in it, this is how the extension identifies the 4bit nature of the model
+   *  Your directory folder where the model is stored needs to have the term "int4" in it, this is how the extension identifies the 4bit nature of the model
 
 10. Before using the extension you need to update the config file; open it in a text editor *Note No quotes around gpu #:
 ```
-   {
+{
     "image_history_dir": "(fill_In)/extensions/Lucid_Vision/ImageHistory/",
-    "python_exec": "(fill_In)/installer_files/env/bin/python",
-    "cli_script_path": "(fill_In)/repositories/DeepSeek-VL/cli_chat.py",
-    "model_path": "(fill_In)",
     "cuda_visible_devices": 0,
     "default_vision_model": "phiVision",
-    "phiVision_model_id": "(fill_In)",
+	 "phiVision_model_id": "(fill_In)",
     "paligemma_model_id": "(fill_In)",
     "paligemma_cpu_model_id": "(fill_In)",
-    "minicpm_llama3_model_id": "(fill_In)"
-   }
+    "minicpm_llama3_model_id": "(fill_In)",
+    "deepseek_vl_model_id": "(fill_in)"
+}
 ```
 If your install directory is /home/username/Desktop/oobLucidVision/text-generation-webui/  the config file will look like this for example:
 
@@ -137,15 +135,13 @@ Make note that you want to change / to \ if you are on Windows
 ```
    {
     "image_history_dir": "/home/username/Desktop/oobLucidVision/text-generation-webui/extensions/Lucid_Vision/ImageHistory/",
-    "python_exec": "/home/username/Desktop/oobLucidVision/text-generation-webui/installer_files/env/bin/python",
-    "cli_script_path": "/home/username/Desktop/oobLucidVision/text-generation-webui/repositories/DeepSeek-VL/cli_chat.py",
-    "model_path": "(fill_In)",  *This is the folder where your deepseekvl model is stored
     "cuda_visible_devices": 0,
     "default_vision_model": "phiVision",
     "phiVision_model_id": "(fill_In)", *This is the folder where your phi-3 vision model is stored
     "paligemma_model_id": "(fill_In)", *This is the folder where your paligemma vision model is stored
     "paligemma_cpu_model_id": "(fill_In)", *This is the folder where your paligemma vision model is stored
-    "minicpm_llama3_model_id": "(fill_In)" *This is the folder where your minicpm_llama3 vision model is stored, the model can either be the normal fp16 or 4-bit version
+    "minicpm_llama3_model_id": "(fill_In)", *This is the folder where your minicpm_llama3 vision model is stored, the model can either be the normal fp16 or 4-bit version
+    "deepseek_vl_model_id": "(fill_in)"
    }
 ```
 
