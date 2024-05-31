@@ -1,5 +1,7 @@
 Video Demo:
 
+There is code in this repo to prevent Alltalk from reading the directory names out loud ([here](https://github.com/RandomInternetPreson/Lucid_Vision/tree/main?tab=readme-ov-file#to-work-with-alltalk)), the video is older and displays Alltalk reading the directory names however. 
+
 https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/8879854b-06d8-49ad-836c-13c84eff6ac9
 
 Download the full demo video here:
