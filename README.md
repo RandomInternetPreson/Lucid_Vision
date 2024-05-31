@@ -23,7 +23,7 @@ Todo:
 
 * Right now the temp setting and parameters for each model are coded in the .py script, I intend to bring these to the UI
   
-~~* Make it comptable with Alltalk, right now each image directory is printed out and this will be read out loud by Alltalk~~
+[done](https://github.com/RandomInternetPreson/Lucid_Vision/tree/main?tab=readme-ov-file#to-work-with-alltalk)~~* Make it comptable with Alltalk, right now each image directory is printed out and this will be read out loud by Alltalk~~[done] 
 
 To accurately proportion credit (original repo creation):
 
