@@ -52,7 +52,7 @@ Welcome to the Lucid Vision Extension repository! This extension enhances the ca
 
 ## Features
 
-* Multi-Model Support: Interact with different vision models, including PhiVision, DeepSeek, MiniCPM-Llama3-V-2_5, and PaliGemma, with options for both GPU and CPU inference.
+* Multi-Model Support: Interact with different vision models, including PhiVision, DeepSeek, MiniCPM-Llama3-V-2_5 (4bit and normal precision), and PaliGemma, with options for both GPU and CPU inference.
 
 * On-Demand Loading: Vision models are loaded into memory only when needed to answer a question, optimizing resource usage.
 
