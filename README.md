@@ -78,7 +78,7 @@ The extension is designed to be efficient with system resources by only loading 
    
 (Note, a couple months ago gradio had a massive update.  For me, this has caused a lot of glitches and errors with extensions; I've briefly tested the Lucid_Vision extension in the newest implementation of textgen and it will work.  However, I was getting timeout popups when vision models were loading for the first time, gradio wasn't waiting for the response from the model upon first load. After a model is loaded once, it is saved in cpu ram cache (this doesn't actively use your ram, it just uses what is free to keep the models in memory so they are quickly reloaded into gpu ram if necessary) and gradio doesn't seem to timeout as often.  The slightly older version of textgen that I've edited does not experience this issue)
 
-3. Update the transformers library using the cmd_yourOShere.sh/bat file (so either cmd_linux.sh, cmd_macos.sh, cmd_windows.bat, or cmd_wsl.bat) and entering the following lines.  If you run the update wizard after this point, it will overrite this update to transformers.  The newest transformers package has the libraries for paligemma, which the code needs to import regardless of whether or not you are intending to use the model.
+2. Update the transformers library using the cmd_yourOShere.sh/bat file (so either cmd_linux.sh, cmd_macos.sh, cmd_windows.bat, or cmd_wsl.bat) and entering the following lines.  If you run the update wizard after this point, it will overrite this update to transformers.  The newest transformers package has the libraries for paligemma, which the code needs to import regardless of whether or not you are intending to use the model.
 
 ```
 pip uninstall transformers -y
@@ -88,7 +88,7 @@ pip install transformers --upgrade --no-cache-dir
 
 ## Model Information
 
-4. Install **DeepseekVL** if you intend on using that model
+3. Install **DeepseekVL** if you intend on using that model
    
    Clone the repo: https://github.com/deepseek-ai/DeepSeek-VL into the `repositories` folder of your textgen install
 
@@ -101,27 +101,29 @@ pip install transformers --upgrade --no-cache-dir
    
    They have different and smaller models to choose from: https://github.com/deepseek-ai/DeepSeek-VL?tab=readme-ov-file#3-model-downloads
 
-6. If you want to use **Phi-3-vision-128k-instruct**, download it here: https://huggingface.co/microsoft/Phi-3-vision-128k-instruct
+4. If you want to use **Phi-3-vision-128k-instruct**, download it here: https://huggingface.co/microsoft/Phi-3-vision-128k-instruct
 
-7. If you want to use **paligemma-3b**, download it here: https://huggingface.co/google/paligemma-3b-ft-cococap-448 (this is just one out of many fine-tunes google provides)
+5. If you want to use **paligemma-3b**, download it here: https://huggingface.co/google/paligemma-3b-ft-cococap-448 (this is just one out of many fine-tunes google provides)
    
    Read this blog on how to inference with the model: https://huggingface.co/blog/paligemma
 
-8. If you want to use **MiniCPM-Llama3-V-2_5**, download it here: https://huggingface.co/openbmb/MiniCPM-Llama3-V-2_5
+6. If you want to use **MiniCPM-Llama3-V-2_5**, download it here: https://huggingface.co/openbmb/MiniCPM-Llama3-V-2_5
 
    The **4-bit** verison of the model can be downloaded here: https://huggingface.co/openbmb/MiniCPM-Llama3-V-2_5-int4
 
    **Notes about 4-bit MiniCPM:**
    *  It might not look like the model fully unloads from vram, but it does and the vram will be reclaimed if another program needs it
    *  Your directory folder where the model is stored needs to have the term "int4" in it, this is how the extension identifies the 4bit nature of the model
+     
+## Updating the config file
 
-10. Before using the extension you need to update the config file; open it in a text editor *Note No quotes around gpu #:
+7. Before using the extension you need to update the config file; open it in a text editor *Note No quotes around gpu #:
 ```
 {
     "image_history_dir": "(fill_In)/extensions/Lucid_Vision/ImageHistory/",
     "cuda_visible_devices": 0,
     "default_vision_model": "phiVision",
-	 "phiVision_model_id": "(fill_In)",
+    "phiVision_model_id": "(fill_In)",
     "paligemma_model_id": "(fill_In)",
     "paligemma_cpu_model_id": "(fill_In)",
     "minicpm_llama3_model_id": "(fill_In)",
