@@ -10,6 +10,8 @@ https://github.com/RandomInternetPreson/Lucid_Vision/blob/main/VideoDemo/Lucid_V
      * Reduced the number of entries needed for the config file.
      * Really cleaned up the code, it is much better organized now.
      * Added the ability to switch which gpu loads the vision model in the UI.
+ 
+* Bonus Update for May 31 2024, WizardLM-2-8x22B and I figured out how to prevent Alltalk from reading the file directory locations!! 
   
 * Update May 30 2024, Lucid_Vision now supports MiniCPM-Llama3-V-2_5, thanks to https://github.com/justin-luoma.  Additionally WizardLM-2-8x22B added the functionality to load in the MiniCPM 4-bit model.
 
@@ -20,7 +22,8 @@ Experimental, and I am currently working to improve the code; but it may work fo
 Todo:
 
 * Right now the temp setting and parameters for each model are coded in the .py script, I intend to bring these to the UI
-* Make it comptable with Alltalk, right now each image directory is printed out and this will be read out loud by Alltalk
+  
+~~* Make it comptable with Alltalk, right now each image directory is printed out and this will be read out loud by Alltalk~~
 
 To accurately proportion credit (original repo creation):
 
@@ -146,6 +149,58 @@ Make note that you want to change / to \ if you are on Windows
     "deepseek_vl_model_id": "(fill_in)"
    }
 ```
+
+## To work with Alltalk
+
+Alltalk is great!! An extension I use all the time: https://github.com/erew123/alltalk_tts
+
+To get Lucid_Vision to work, the LLM needs to repeat the file directory of an image, and in doing so Alltalk will want to transcribe that text to audo.  It is annoying to have the tts model try an transcribe file directories.  If you want to get Alltalk to work well wtih Lucid_Vision you need to replace the code here in the script.py file that comes with Alltalk (search for the "IMAGE CLEANING" part of the code):
+
+```
+########################
+#### IMAGE CLEANING ####
+########################
+OriginalLucidVisionText = ""
+
+# This is the existing pattern for matching both images and file location text
+img_pattern = r'<img[^>]*src\s*=\s*["\'][^"\'>]+["\'][^>]*>|File location: [^.]+.png'
+
+def extract_and_remove_images(text):
+   """
+   Extracts all image and file location data from the text and removes it for clean TTS processing.
+   Returns the cleaned text and the extracted image and file location data.
+   """
+   global OriginalLucidVisionText
+   OriginalLucidVisionText = text  # Update the global variable with the original text
+
+   img_matches = re.findall(img_pattern, text)
+   img_info = "\n".join(img_matches)  # Store extracted image and file location data
+   cleaned_text = re.sub(img_pattern, '', text)  # Remove images and file locations from text
+   return cleaned_text, img_info
+
+def reinsert_images(cleaned_string, img_info):
+  """
+  Reinserts the previously extracted image and file location data back into the text.
+  """
+  global OriginalLucidVisionText
+
+  # Check if there are images or file locations to reinsert
+  if img_info:
+     # Check if the "Vision Model Responses:" phrase is present in the original text
+     if re.search(r'Vision Model Responses:', OriginalLucidVisionText):
+        # If present, return the original text as is, without modifying it
+        return OriginalLucidVisionText
+     else:
+        # If not present, append the img_info to the end of the cleaned string
+        cleaned_string += f"\n\n{img_info}"
+  return cleaned_string
+
+
+#################################
+#### TTS STANDARD GENERATION ####
+#################################
+```
+
 
 ## **Quirks and Notes:**
 1. **When you load a picture once, it is used once.  Even if the image stays present in the UI element on screen, it is not actively being used.**
