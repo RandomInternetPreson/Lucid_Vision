@@ -1,16 +1,16 @@
 # pip install pexpect
 import json
-import os
 import re
 from datetime import datetime  # Import datetime for timestamp generation
 from pathlib import Path
 
 import gradio as gr
-import pexpect
 import torch
 from PIL import Image
-from transformers import AutoModelForCausalLM, AutoModel, AutoTokenizer
-from transformers import AutoProcessor, PaliGemmaForConditionalGeneration
+from deepseek_vl.models import VLChatProcessor
+from deepseek_vl.utils.io import load_pil_images as load_pil_images_for_deepseek
+from transformers import AutoModelForCausalLM, AutoModel, AutoTokenizer, AutoProcessor, \
+    PaliGemmaForConditionalGeneration
 
 
 # Load configuration settings from a JSON file
@@ -24,11 +24,32 @@ def load_config():
 # Load the configuration settings at the module level
 config = load_config()
 
+# Define the model ID for PhiVision using the configuration setting
+phiVision_model_id = config["phiVision_model_id"]
+
+# Define the model ID for PaliGemma using the configuration setting
+paligemma_model_id = config["paligemma_model_id"]
+
+minicpm_llama3_model_id = config["minicpm_llama3_model_id"]
+
+cuda_device = config["cuda_visible_devices"]
+
+selected_vision_model = config["default_vision_model"]
+
+# Global variable to store the file path of the selected image
+selected_image_path = None
+
 # Define the directory where the image files will be saved
 # This path is loaded from the configuration file
 image_history_dir = Path(config["image_history_dir"])
 # Ensure the directory exists, creating it if necessary
 image_history_dir.mkdir(parents=True, exist_ok=True)
+
+global phiVision_model, phiVision_processor
+global minicpm_llama_model, minicpm_llama_tokenizer
+global paligemma_model, paligemma_processor
+global paligemma_cpu_model, paligemma_cpu_processor
+global deepseek_processor, deepseek_tokenizer, deepseek_gpt
 
 
 # Function to generate a timestamped filename for saved images
@@ -37,10 +58,6 @@ def get_timestamped_filename(extension=".png"):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     # Return a formatted file name with the timestamp
     return f"image_{timestamp}{extension}"
-
-
-# Global variable to store the file path of the selected image
-selected_image_path = None
 
 
 # Function to modify the user input before it is processed by the LLM
@@ -96,8 +113,11 @@ def ui():
     vision_model_button = gr.Button(value="Ask Vision Model")
 
     # Create a text field to display the vision model's response
-    vision_model_response_output = gr.Textbox(label="Vision Model Response", lines=5,
-                                              placeholder="Response will appear here...")
+    vision_model_response_output = gr.Textbox(
+        label="Vision Model Response",
+        lines=5,
+        placeholder="Response will appear here..."
+    )
 
     # Add radio buttons for vision model selection
     vision_model_selection = gr.Radio(
@@ -106,6 +126,7 @@ def ui():
         value=config["default_vision_model"],
         label="Select Vision Model"
     )
+
     # Add an event handler for the radio button selection
     vision_model_selection.change(
         fn=update_vision_model,
@@ -113,10 +134,23 @@ def ui():
         outputs=None
     )
 
+    cuda_devices_input = gr.Textbox(
+        value=cuda_device,
+        label="CUDA Device ID",
+        max_lines=1
+    )
+
+    cuda_devices_input.change(
+        fn=update_cuda_device,
+        inputs=cuda_devices_input,
+        outputs=None
+    )
+
     # Set up the event that occurs when the vision model button is clicked
     vision_model_button.click(
         fn=process_with_vision_model,
-        inputs=[user_input_to_vision_model, image_input, vision_model_selection],  # Pass the actual gr.Image component
+        inputs=[user_input_to_vision_model, image_input, vision_model_selection],
+        # Pass the actual gr.Image component
         outputs=vision_model_response_output
     )
 
@@ -154,9 +188,6 @@ def unload_paligemma_cpu_model():
     # Global variable to store the selected vision model
 
 
-selected_vision_model = config["default_vision_model"]
-
-
 # Function to update the selected vision model and load the corresponding model
 def update_vision_model(model_name):
     global selected_vision_model
@@ -164,14 +195,12 @@ def update_vision_model(model_name):
     return model_name
 
 
+def update_cuda_device(device):
+    global cuda_device
+    print(f"Cuda device set to index = {device}")
+    cuda_device = int(device)
+    return cuda_device
 
-# Define the model ID for PhiVision using the configuration setting
-phiVision_model_id = config["phiVision_model_id"]
-
-# Define the model ID for PaliGemma using the configuration setting
-paligemma_model_id = config["paligemma_model_id"]
-
-minicpm_llama3_model_id = config["minicpm_llama3_model_id"]
 
 # Main entry point for the Gradio interface
 if __name__ == "__main__":
@@ -197,13 +226,11 @@ unwanted_prefix_pattern = re.compile(
 
 # Function to load the PhiVision model and processor
 def load_phi_vision_model():
-    global phiVision_model, phiVision_processor
-    # Extract the CUDA_VISIBLE_DEVICES setting from the config file
-    cuda_devices = config["cuda_visible_devices"]
+    global phiVision_model, phiVision_processor, cuda_device
     # Load the PhiVision model and processor on-demand, specifying the device map
     phiVision_model = AutoModelForCausalLM.from_pretrained(
         phiVision_model_id,
-        device_map={"": int(cuda_devices)},  # Use the specified CUDA device(s)
+        device_map={"": cuda_device},  # Use the specified CUDA device(s)
         trust_remote_code=True,
         torch_dtype="auto"
     )
@@ -228,39 +255,34 @@ def unload_phi_vision_model():
 
 # Function to load the MiniCPM-Llama3 model and tokenizer
 def load_minicpm_llama_model():
-   global minicpm_llama_model, minicpm_llama_tokenizer
-   # Extract the model ID from the config file
-   model_id = config["minicpm_llama3_model_id"]
-   # Check if the model ID contains the phrase "int4"
-   if "int4" in model_id:
-       # Load the 4-bit quantized model and tokenizer
-       minicpm_llama_model = AutoModel.from_pretrained(
-           model_id,
-           trust_remote_code=True,
-           torch_dtype=torch.float16  # Use float16 as per the example code for 4-bit models
-       ).eval()
-       minicpm_llama_tokenizer = AutoTokenizer.from_pretrained(
-           model_id,
-           trust_remote_code=True
-       )
-       # Print a message indicating that the 4-bit model is loaded
-       print("MiniCPM-Llama3 4-bit quantized model loaded on-demand.")
-   else:
-       # Load the standard model and tokenizer
-       minicpm_llama_model = AutoModel.from_pretrained(
-           model_id,
-           trust_remote_code=True,
-           torch_dtype=torch.bfloat16  # Use bfloat16 for standard models
-       ).eval()
-       minicpm_llama_tokenizer = AutoTokenizer.from_pretrained(
-           model_id,
-           trust_remote_code=True
-       )
-       # Print a message indicating that the standard model is loaded
-       print("MiniCPM-Llama3 standard model loaded on-demand.")
-
-
-global minicpm_llama_model, minicpm_llama_tokenizer
+    global minicpm_llama_model, minicpm_llama_tokenizer, cuda_device
+    if "int4" in minicpm_llama3_model_id:
+        # Load the 4-bit quantized model and tokenizer
+        minicpm_llama_model = AutoModel.from_pretrained(
+            minicpm_llama3_model_id,
+            device_map={"": cuda_device},
+            trust_remote_code=True,
+            torch_dtype=torch.float16  # Use float16 as per the example code for 4-bit models
+        ).eval()
+        minicpm_llama_tokenizer = AutoTokenizer.from_pretrained(
+            minicpm_llama3_model_id,
+            trust_remote_code=True
+        )
+        # Print a message indicating that the 4-bit model is loaded
+        print("MiniCPM-Llama3 4-bit quantized model loaded on-demand.")
+    else:
+        # Load the standard model and tokenizer
+        minicpm_llama_model = AutoModel.from_pretrained(
+            minicpm_llama3_model_id,
+            device_map={"": cuda_device},  # Use the specified CUDA device
+            trust_remote_code=True,
+            torch_dtype=torch.bfloat16
+        ).eval()
+        minicpm_llama_tokenizer = AutoTokenizer.from_pretrained(
+            minicpm_llama3_model_id,
+            trust_remote_code=True
+        )
+        print("MiniCPM-Llama3 standard model loaded on-demand.")
 
 
 def unload_minicpm_llama_model():
@@ -274,13 +296,11 @@ def unload_minicpm_llama_model():
 
 # Function to load the PaliGemma model and processor
 def load_paligemma_model():
-    global paligemma_model, paligemma_processor
-    # Extract the CUDA_VISIBLE_DEVICES setting from the config file
-    cuda_devices = config["cuda_visible_devices"]
+    global paligemma_model, paligemma_processor, cuda_device
     # Load the PaliGemma model and processor on-demand, specifying the device map
     paligemma_model = PaliGemmaForConditionalGeneration.from_pretrained(
         paligemma_model_id,
-        device_map={"": int(cuda_devices)},  # Use the specified CUDA device(s)
+        device_map={"": cuda_device},  # Use the specified CUDA device(s)
         torch_dtype=torch.bfloat16,
         revision="bfloat16",
     ).eval()
@@ -300,8 +320,32 @@ def unload_paligemma_model():
         print("PaliGemma model unloaded.")
 
 
+def load_deepseek_model():
+    global deepseek_processor, deepseek_tokenizer, deepseek_gpt, cuda_device
+    deepseek_processor = VLChatProcessor.from_pretrained(config["deepseek_vl_model_id"])
+    deepseek_tokenizer = deepseek_processor.tokenizer
+    deepseek_gpt = AutoModelForCausalLM.from_pretrained(
+        config["deepseek_vl_model_id"],
+        device_map={"": cuda_device},
+        trust_remote_code=True,
+        torch_dtype=torch.bfloat16
+    ).to(torch.bfloat16).cuda().eval()
+    print("DeepSeek model loaded on-demand.")
+
+
+def unload_deepseek_model():
+    global deepseek_processor, deepseek_tokenizer, deepseek_gpt
+    if deepseek_processor is not None:
+        del deepseek_gpt
+        del deepseek_tokenizer
+        del deepseek_processor
+        print("DeepSeek model unloaded.")
+    torch.cuda.empty_cache()
+
+
 # Function to modify the output from the LLM before it is displayed to the user
 def output_modifier(output, state, is_chat=False):
+    global cuda_device
     # Search for the "File location" trigger phrase in the LLM's output
     file_location_matches = file_location_pattern.findall(output)
     if file_location_matches:
@@ -317,120 +361,16 @@ def output_modifier(output, state, is_chat=False):
 
         # Check which vision model is currently selected
         if selected_vision_model == "phiVision":
-            # Load the PhiVision model and processor on-demand
-            load_phi_vision_model()
-
-            # Load the image using PIL
-            image = Image.open(file_path)
-
-            # Prepare the prompt for the PhiVision model
-            messages = [
-                {"role": "user", "content": f"<|image_1|>\n{questions}"}
-            ]
-            prompt = phiVision_processor.tokenizer.apply_chat_template(
-                messages, tokenize=False, add_generation_prompt=True
-            )
-
-            # Extract the CUDA_VISIBLE_DEVICES setting from the config file
-            cuda_devices = config["cuda_visible_devices"]
-            # Convert the CUDA_VISIBLE_DEVICES string to an integer (assuming a single device for simplicity)
-            cuda_device_index = int(cuda_devices)
-
-            # Process the prompt and image to create model inputs
-            inputs = phiVision_processor(prompt, [image], return_tensors="pt").to(f"cuda:{cuda_device_index}")
-
-            # Define the generation arguments
-            generation_args = {
-                "max_new_tokens": 500,
-                "temperature": 1.0,
-                "do_sample": False,
-            }
-
-            # Generate the response using the PhiVision model
-            generate_ids = phiVision_model.generate(
-                **inputs,
-                eos_token_id=phiVision_processor.tokenizer.eos_token_id,
-                **generation_args
-            )
-
-            # Remove input tokens from the generated IDs
-            generate_ids = generate_ids[:, inputs['input_ids'].shape[1]:]
-
-            # Decode the generated IDs to get the text response
-            vision_model_response = phiVision_processor.batch_decode(
-                generate_ids,
-                skip_special_tokens=True,
-                clean_up_tokenization_spaces=False
-            )[0]
-
-            # Unload the PhiVision model and processor after generating the response
-            unload_phi_vision_model()
+            vision_model_response = generate_phi_vision(file_path, questions)
 
         elif selected_vision_model == "DeepSeek":
-            # Call the function to send the questions and file path to the DeepSeek vision model CLI
-            vision_model_responses = send_to_vision_model_cli(file_path, questions)
-            # Clean up the DeepSeek vision model's responses by removing the unwanted initial text and prefixes
-            cleaned_responses = unwanted_initial_text_pattern.sub("", vision_model_responses)
-            cleaned_responses = unwanted_prefix_pattern.sub("", cleaned_responses)
-
-            vision_model_response = cleaned_responses
+            vision_model_response = generate_deepseek(file_path, questions)
 
         elif selected_vision_model == "paligemma":
-            # Load the PaliGemma model and processor on-demand
-            load_paligemma_model()
-
-            # Load the image using PIL
-            image = Image.open(file_path)
-
-            # Prepare the prompt for the PaliGemma model using the user's question
-            prompt = questions
-
-            # Extract the CUDA_VISIBLE_DEVICES setting from the config file
-            cuda_devices = config["cuda_visible_devices"]
-            # Convert the CUDA_VISIBLE_DEVICES string to an integer (assuming a single device for simplicity)
-            cuda_device_index = int(cuda_devices)
-
-            model_inputs = paligemma_processor(text=prompt, images=image, return_tensors="pt").to(
-                f"cuda:{cuda_device_index}")
-            input_len = model_inputs["input_ids"].shape[-1]
-
-            # Generate the response using the PaliGemma model
-            with torch.inference_mode():
-                generation = paligemma_model.generate(
-                    **model_inputs,
-                    max_new_tokens=100,
-                    do_sample=True
-                )
-                generation = generation[0][input_len:]
-                vision_model_response = paligemma_processor.decode(generation, skip_special_tokens=True)
-
-            # Unload the PaliGemma model and processor after generating the response
-            unload_paligemma_model()
+            vision_model_response = generate_paligemma(file_path, questions)
 
         elif selected_vision_model == "paligemma_cpu":
-            # Load the PaliGemma CPU model and processor on-demand
-            load_paligemma_cpu_model()
-
-            # Load the image using PIL
-            image = Image.open(file_path)
-
-            # Prepare the prompt for the PaliGemma CPU model using the user's question
-            prompt = questions
-            model_inputs = paligemma_cpu_processor(text=prompt, images=image, return_tensors="pt")
-            input_len = model_inputs["input_ids"].shape[-1]
-
-            # Generate the response using the PaliGemma CPU model
-            with torch.inference_mode():
-                generation = paligemma_cpu_model.generate(
-                    **model_inputs,
-                    max_new_tokens=100,
-                    do_sample=False
-                )
-                generation = generation[0][input_len:]
-                vision_model_response = paligemma_cpu_processor.decode(generation, skip_special_tokens=True)
-
-            # Unload the PaliGemma CPU model and processor after generating the response
-            unload_paligemma_cpu_model()
+            vision_model_response = generate_paligemma_cpu(file_path, questions)
 
         elif selected_vision_model == "minicpm_llama3":
             vision_model_response = generate_minicpm_llama3(file_path, questions)
@@ -444,57 +384,52 @@ def output_modifier(output, state, is_chat=False):
 
 # Function to generate a response using the MiniCPM-Llama3 model
 def generate_minicpm_llama3(file_path, questions):
-  # Load the 4-bit or standard model based on the model ID
-  load_minicpm_llama_model()
-  # Load the image using PIL
-  image = Image.open(file_path).convert("RGB")
-  # Prepare the chat messages
-  messages = [
-      {"role": "user", "content": f"{questions}"}
-  ]
-  # Define the generation arguments
-  generation_args = {
-      "max_new_tokens": 896,
-      "repetition_penalty": 1.05,
-      "num_beams": 3,
-      "top_p": 0.8,
-      "top_k": 1,
-      "temperature": 0.7,
-      "sampling": True,
-  }
-  # Check if the model ID contains the phrase "int4"
-  if "int4" in config["minicpm_llama3_model_id"]:
-      # Enable streaming for the 4-bit model
-      generation_args["stream"] = False
-      # Use the model.chat method with streaming enabled
-      vision_model_response = ""
-      for new_text in minicpm_llama_model.chat(
-         image=image,
-         msgs=messages,
-         tokenizer=minicpm_llama_tokenizer,
-         **generation_args
-     ):
-         vision_model_response += new_text
-         print(new_text, flush=True, end='')
-  else:
-      # For non-4bit models, move the model to the specified CUDA device
-      cuda_devices = config["cuda_visible_devices"]
-      cuda_device_index = int(cuda_devices)
-      minicpm_llama_model.to(f"cuda:{cuda_device_index}")
-      # Use the model.chat method without streaming for the standard model
-      vision_model_response = minicpm_llama_model.chat(
-         image=image,
-         msgs=messages,
-         tokenizer=minicpm_llama_tokenizer,
-         **generation_args
-     )
-  # Unload the model and tokenizer after generating the response
-  unload_minicpm_llama_model()
-  return vision_model_response
+    global cuda_device
+    try:
+        load_minicpm_llama_model()
+        image = Image.open(file_path).convert("RGB")
+        messages = [
+            {"role": "user", "content": f"{questions}"}
+        ]
+        # Define the generation arguments
+        generation_args = {
+            "max_new_tokens": 896,
+            "repetition_penalty": 1.05,
+            "num_beams": 3,
+            "top_p": 0.8,
+            "top_k": 1,
+            "temperature": 0.7,
+            "sampling": True,
+        }
+        if "int4" in minicpm_llama3_model_id:
+            # Disable streaming for the 4-bit model
+            generation_args["stream"] = False
+            # Use the model.chat method with streaming enabled
+            vision_model_response = ""
+            for new_text in minicpm_llama_model.chat(
+                    image=image,
+                    msgs=messages,
+                    tokenizer=minicpm_llama_tokenizer,
+                    **generation_args
+            ):
+                vision_model_response += new_text
+                print(new_text, flush=True, end='')
+        else:
+            minicpm_llama_model.to(f"cuda:{cuda_device}")
+            vision_model_response = minicpm_llama_model.chat(
+                image=image,
+                msgs=messages,
+                tokenizer=minicpm_llama_tokenizer,
+                **generation_args
+            )
+            return vision_model_response
+    finally:
+        unload_minicpm_llama_model()
 
 
 # Function to process the user's input text and selected image with the vision model
 def process_with_vision_model(user_input, image, selected_model):
+    global cuda_device
     # Save the uploaded image to the specified directory with a timestamp
     file_name = get_timestamped_filename()
     file_path = image_history_dir / file_name
@@ -506,6 +441,77 @@ def process_with_vision_model(user_input, image, selected_model):
 
     # Check which vision model is currently selected
     if selected_model == "phiVision":
+        vision_model_response = generate_phi_vision(file_path, user_input)
+
+    elif selected_model == "DeepSeek":
+        vision_model_response = generate_deepseek(file_path, user_input)
+
+    elif selected_model == "paligemma":
+        vision_model_response = generate_paligemma(file_path, user_input)
+
+    elif selected_model == "paligemma_cpu":
+        vision_model_response = generate_paligemma_cpu(file_path, user_input)
+
+    elif selected_model == "minicpm_llama3":
+        vision_model_response = generate_minicpm_llama3(file_path, user_input)
+
+    # Return the cleaned-up response from the vision model
+    return vision_model_response
+
+
+def generate_paligemma_cpu(file_path, user_input):
+    try:
+        # Load the PaliGemma CPU model and processor on-demand
+        load_paligemma_cpu_model()
+        # Load the saved image using PIL
+        with Image.open(file_path) as img:
+            # Prepare the prompt for the PaliGemma CPU model using the user's question
+            prompt = user_input
+            model_inputs = paligemma_cpu_processor(text=prompt, images=img, return_tensors="pt")
+            input_len = model_inputs["input_ids"].shape[-1]
+            # Generate the response using the PaliGemma CPU model
+            with torch.inference_mode():
+                generation = paligemma_cpu_model.generate(
+                    **model_inputs,
+                    max_new_tokens=100,
+                    do_sample=True  # Set to True for sampling-based generation
+                )
+                generation = generation[0][input_len:]
+                vision_model_response = paligemma_cpu_processor.decode(generation, skip_special_tokens=True)
+        # Unload the PaliGemma CPU model and processor after generating the response
+        return vision_model_response
+    finally:
+        unload_paligemma_cpu_model()
+
+
+def generate_paligemma(file_path, user_input):
+    try:
+        # Load the PaliGemma model and processor on-demand
+        load_paligemma_model()
+        # Load the saved image using PIL
+        with Image.open(file_path) as img:
+            # Prepare the prompt for the PaliGemma model using the user's question
+            model_inputs = paligemma_processor(text=user_input, images=img, return_tensors="pt").to(
+                f"cuda:{cuda_device}")
+            input_len = model_inputs["input_ids"].shape[-1]
+            # Generate the response using the PaliGemma model
+            with torch.inference_mode():
+                generation = paligemma_model.generate(
+                    **model_inputs,
+                    max_new_tokens=100,
+                    do_sample=True  # Set to True for sampling-based generation
+                )
+                generation = generation[0][input_len:]
+                vision_model_response = paligemma_processor.decode(generation, skip_special_tokens=True)
+        # Unload the PaliGemma model and processor after generating the response
+        return vision_model_response
+    finally:
+        unload_paligemma_model()
+
+
+def generate_phi_vision(file_path, user_input):
+    global cuda_device
+    try:
         # Load the PhiVision model and processor on-demand
         load_phi_vision_model()
         # Load the saved image using PIL
@@ -518,12 +524,12 @@ def process_with_vision_model(user_input, image, selected_model):
                 messages, tokenize=False, add_generation_prompt=True
             )
             # Extract the CUDA_VISIBLE_DEVICES setting from the config file
-            cuda_devices = config["cuda_visible_devices"]
+            # cuda_devices = config["cuda_visible_devices"]
             # Convert the CUDA_VISIBLE_DEVICES string to an integer (assuming a single device for simplicity)
-            cuda_device_index = int(cuda_devices)
+            # cuda_device_index = int(cuda_devices)
 
             # Prepare the model inputs and move them to the specified CUDA device
-            inputs = phiVision_processor(prompt, [image], return_tensors="pt").to(f"cuda:{cuda_device_index}")
+            inputs = phiVision_processor(prompt, [img], return_tensors="pt").to(f"cuda:{cuda_device}")
             # Define the generation arguments
             generation_args = {
                 "max_new_tokens": 500,
@@ -546,69 +552,45 @@ def process_with_vision_model(user_input, image, selected_model):
                 clean_up_tokenization_spaces=False
             )[0]
         # Unload the PhiVision model and processor after generating the response
+        return vision_model_response
+    finally:
         unload_phi_vision_model()
 
-    elif selected_model == "DeepSeek":
-        # Call the function to send the questions and file path to the DeepSeek vision model CLI
-        vision_model_responses = send_to_vision_model_cli(file_path, user_input)
-        # Clean up the DeepSeek vision model's responses by removing the unwanted initial text and prefixes
-        cleaned_responses = unwanted_initial_text_pattern.sub("", vision_model_responses)
-        cleaned_responses = unwanted_prefix_pattern.sub("", cleaned_responses)
-        vision_model_response = cleaned_responses
 
-
-    elif selected_model == "paligemma":
-        # Load the PaliGemma model and processor on-demand
-        load_paligemma_model()
-        # Load the saved image using PIL
-        with Image.open(file_path) as img:
-            # Prepare the prompt for the PaliGemma model using the user's question
-            prompt = user_input
-            # Extract the CUDA_VISIBLE_DEVICES setting from the config file
-            cuda_devices = config["cuda_visible_devices"]
-            # Convert the CUDA_VISIBLE_DEVICES string to an integer (assuming a single device for simplicity)
-            cuda_device_index = int(cuda_devices)
-            model_inputs = paligemma_processor(text=prompt, images=img, return_tensors="pt").to(
-                f"cuda:{cuda_device_index}")
-            input_len = model_inputs["input_ids"].shape[-1]
-            # Generate the response using the PaliGemma model
-            with torch.inference_mode():
-                generation = paligemma_model.generate(
-                    **model_inputs,
-                    max_new_tokens=100,
-                    do_sample=True  # Set to True for sampling-based generation
-                )
-                generation = generation[0][input_len:]
-                vision_model_response = paligemma_processor.decode(generation, skip_special_tokens=True)
-        # Unload the PaliGemma model and processor after generating the response
-        unload_paligemma_model()
-
-    elif selected_model == "paligemma_cpu":
-        # Load the PaliGemma CPU model and processor on-demand
-        load_paligemma_cpu_model()
-        # Load the saved image using PIL
-        with Image.open(file_path) as img:
-            # Prepare the prompt for the PaliGemma CPU model using the user's question
-            prompt = user_input
-            model_inputs = paligemma_cpu_processor(text=prompt, images=img, return_tensors="pt")
-            input_len = model_inputs["input_ids"].shape[-1]
-            # Generate the response using the PaliGemma CPU model
-            with torch.inference_mode():
-                generation = paligemma_cpu_model.generate(
-                    **model_inputs,
-                    max_new_tokens=100,
-                    do_sample=True  # Set to True for sampling-based generation
-                )
-                generation = generation[0][input_len:]
-                vision_model_response = paligemma_cpu_processor.decode(generation, skip_special_tokens=True)
-        # Unload the PaliGemma CPU model and processor after generating the response
-        unload_paligemma_cpu_model()
-
-    elif selected_model == "minicpm_llama3":
-        vision_model_response = generate_minicpm_llama3(file_path, user_input)
-
-    # Return the cleaned-up response from the vision model
-    return vision_model_response
+def generate_deepseek(file_path, user_input):
+    try:
+        load_deepseek_model()
+        conversation = [
+            {
+                "role": "User",
+                "content": f"<image_placeholder>{user_input}",
+                "images": [f"{file_path}"]
+            }, {
+                "role": "Assistant",
+                "content": ""
+            }
+        ]
+        print(conversation)
+        pil_images = load_pil_images_for_deepseek(conversation)
+        prepare_inputs = deepseek_processor(
+            conversations=conversation,
+            images=pil_images,
+            force_batchify=True
+        ).to(deepseek_gpt.device)
+        input_embeds = deepseek_gpt.prepare_inputs_embeds(**prepare_inputs)
+        outputs = deepseek_gpt.language_model.generate(
+            inputs_embeds=input_embeds,
+            attention_mask=prepare_inputs.attention_mask,
+            pad_token_id=deepseek_tokenizer.eos_token_id,
+            bos_token_id=deepseek_tokenizer.bos_token_id,
+            eos_token_id=deepseek_tokenizer.eos_token_id,
+            max_new_tokens=512,
+            do_sample=False,
+            use_cache=True
+        )
+        return deepseek_tokenizer.decode(outputs[0].cpu().tolist(), skip_special_tokens=True)
+    finally:
+        unload_deepseek_model()
 
 
 # Function to modify the chat history before it is used for text generation
@@ -633,13 +615,13 @@ def history_modifier(history):
                     # If the "visible" entry contains the full match string
                     if full_match_string in visible_text:
                         # Split the "visible" text at the full match string
-                        before_match, after_match = visible_text.split(full_match_string, 1)
+                        _, after_match = visible_text.split(full_match_string, 1)
                         # Find the position where the ".png" part ends in the "internal" text
                         png_end_pos = internal_text.find(file_path) + len(file_path)
                         # If the ".png" part is found and there is content after it
                         if png_end_pos < len(internal_text) and internal_text[png_end_pos] == "\n":
                             # Extract the existing content after the ".png" part in the "internal" text
-                            existing_internal_after_png = internal_text[png_end_pos:]
+                            _ = internal_text[png_end_pos:]
                             # Replace the existing content after the ".png" part in the "internal" text
                             # with the corresponding content from the "visible" text
                             new_internal_text = internal_text[:png_end_pos] + after_match
@@ -651,50 +633,3 @@ def history_modifier(history):
                             # Append the content after the full match string from the "visible" text
                             history["internal"][internal_index][1] += after_match
     return history
-
-
-# Function to send questions to the vision model CLI and collect the responses
-def send_to_vision_model_cli(file_path, questions):
-    # Convert file_path to a string for CLI compatibility
-    file_path_str = str(file_path)
-
-    # Extract the CUDA_VISIBLE_DEVICES setting from the config file
-    cuda_devices = config["cuda_visible_devices"]
-    # Ensure that cuda_devices is a string (it could be an integer or a list of integers)
-    cuda_devices_str = str(cuda_devices)
-
-    # Define the environment variables for the CLI process
-    env = {
-        'CUDA_VISIBLE_DEVICES': cuda_devices_str,  # Make sure this is a string
-        'PATH': os.environ['PATH']  # Include all necessary paths in the environment
-    }
-    # Construct the command to run the vision model CLI script with the specified model path
-    command = f"{config['python_exec']} {config['cli_script_path']} --model_path {config['model_path']}"
-    # Spawn a new process to run the CLI command
-    child = pexpect.spawn(command, env=env, encoding='utf-8', timeout=800)
-    try:
-        # Wait for the initial prompt from the CLI
-        child.expect("DeepSeek-VL-Chat is a chatbot that can answer questions based on the given image. Enjoy it!")
-        # Send the questions to the CLI, prefixed with an image placeholder
-        child.sendline(f"<image_placeholder> {questions}")
-        # Wait for the file path prompt and send the image file path as a string
-        child.expect(r"\(1/1\) Input the image file path:")
-        child.sendline(file_path_str)  # Use the string representation of the file path
-        # Wait for the response from the CLI and collect the output
-        child.expect("User \[<image_placeholder> indicates an image\]:", timeout=30)
-        response = child.before  # Collects all text printed before the matched pattern
-        # Close the CLI process
-        child.close()
-        return response.strip()
-    except pexpect.TIMEOUT as e:
-        # Handle a timeout error
-        child.close()
-        return f"Timeout error: {e}"
-    except pexpect.EOF as e:
-        # Handle an end-of-file error
-        child.close()
-        return f"EOF error: {e}"
-    except Exception as e:
-        # Handle any other exceptions that may occur
-        child.close()
-        return f"Error: {e}"
