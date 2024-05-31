@@ -146,7 +146,7 @@ Make note that you want to change / to \ if you are on Windows
     "paligemma_model_id": "(fill_In)", *This is the folder where your paligemma vision model is stored
     "paligemma_cpu_model_id": "(fill_In)", *This is the folder where your paligemma vision model is stored
     "minicpm_llama3_model_id": "(fill_In)", *This is the folder where your minicpm_llama3 vision model is stored, the model can either be the normal fp16 or 4-bit version
-    "deepseek_vl_model_id": "(fill_in)"
+    "deepseek_vl_model_id": "(fill_in)",  *This is the folder where your deepseek vision model is stored
    }
 ```
 
