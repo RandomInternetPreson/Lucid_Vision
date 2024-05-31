@@ -32,7 +32,7 @@ paligemma_model_id = config["paligemma_model_id"]
 
 minicpm_llama3_model_id = config["minicpm_llama3_model_id"]
 
-cuda_device = int(config["cuda_visible_devices"])
+cuda_device = config["cuda_visible_devices"]
 
 selected_vision_model = config["default_vision_model"]
 
@@ -135,10 +135,9 @@ def ui():
     )
 
     cuda_devices_input = gr.Textbox(
+        value=cuda_device,
         label="CUDA Device ID",
-        placeholder="0",
-        max_lines=1,
-        default=cuda_device
+        max_lines=1
     )
 
     cuda_devices_input.change(
