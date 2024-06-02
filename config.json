@@ -1,10 +1,11 @@
 {
-    "image_history_dir": "(fill_In)/extensions/Lucid_Vision/ImageHistory/",
+    "image_history_dir": "(fill_in)/extensions/Lucid_Vision/ImageHistory/",
     "cuda_visible_devices": 0,
     "default_vision_model": "phiVision",
-	"phiVision_model_id": "(fill_In)",
+    "phiVision_model_id": "(fill_in)",
     "paligemma_model_id": "(fill_In)",
     "paligemma_cpu_model_id": "(fill_In)",
-    "minicpm_llama3_model_id": "(fill_In)",
-    "deepseek_vl_model_id": "(fill_in)"
+    "minicpm_llama3_model_id": "(fill_in)",
+    "deepseek_vl_model_id": "(fill_in)",
+    "bunny_model_id": "(fill_in)"
 }
