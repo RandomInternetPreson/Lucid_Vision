@@ -350,6 +350,7 @@ def unload_deepseek_model():
 
 def load_bunny_model():
     global bunny_model, bunny_tokenizer, cuda_device
+    torch.cuda.set_device(cuda_device)  # Set default device before loading models
     bunny_model = AutoModelForCausalLM.from_pretrained(
         bunny_model_id,
         torch_dtype=torch.bfloat16,
