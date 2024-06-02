@@ -7,6 +7,8 @@ https://github.com/RandomInternetPreson/Lucid_Vision/assets/6488699/8879854b-06d
 Download the full demo video here:
 https://github.com/RandomInternetPreson/Lucid_Vision/blob/main/VideoDemo/Lucid_Vision_demoCompBig.mov
 
+* Update June 2 2024, Lucid_Vision now supports Bunny-v1_1-Llama-3-8B-V, again thanks to https://github.com/justin-luoma :3
+
 * Update May 31 2024, many thanks to https://github.com/justin-luoma, they have made several recent updates to the code, now merged with this repo.
      * Removed the need to communicate with deepseek via the cli, this removes the only extra dependency needed to run Lucid_Vision.
      * Reduced the number of entries needed for the config file.
@@ -54,7 +56,7 @@ Welcome to the Lucid Vision Extension repository! This extension enhances the ca
 
 ## Features
 
-* Multi-Model Support: Interact with different vision models, including PhiVision, DeepSeek, MiniCPM-Llama3-V-2_5 (4bit and normal precision), and PaliGemma, with options for both GPU and CPU inference.
+* Multi-Model Support: Interact with different vision models, including PhiVision, DeepSeek, MiniCPM-Llama3-V-2_5 (4bit and normal precision), Bunny-v1_1-Llama-3-8B-V, and PaliGemma, with options for both GPU and CPU inference.
 
 * On-Demand Loading: Vision models are loaded into memory only when needed to answer a question, optimizing resource usage.
 
@@ -119,10 +121,15 @@ pip install transformers --upgrade --no-cache-dir
    **Notes about 4-bit MiniCPM:**
    *  It might not look like the model fully unloads from vram, but it does and the vram will be reclaimed if another program needs it
    *  Your directory folder where the model is stored needs to have the term "int4" in it, this is how the extension identifies the 4bit nature of the model
-     
+
+7. If you want to use **Bunny-v1_1-Llama-3-8B-V**, download it here: https://huggingface.co/BAAI/Bunny-v1_1-Llama-3-8B-V
+   
+    **Notes about Bunny-v1_1-Llama-3-8B-V:**
+    *  When running for the first time the model needs internet access so it can download models--google--siglip-so400m-patch14-384 to your cache/huggingface directory.  This is an additional 3.5GB file the model needs to run.
+
 ## Updating the config file
 
-7. Before using the extension you need to update the config file; open it in a text editor *Note No quotes around gpu #:
+8. Before using the extension you need to update the config file; open it in a text editor *Note No quotes around gpu #:
 ```
 {
     "image_history_dir": "(fill_In)/extensions/Lucid_Vision/ImageHistory/",
@@ -132,7 +139,8 @@ pip install transformers --upgrade --no-cache-dir
     "paligemma_model_id": "(fill_In)",
     "paligemma_cpu_model_id": "(fill_In)",
     "minicpm_llama3_model_id": "(fill_In)",
-    "deepseek_vl_model_id": "(fill_in)"
+    "deepseek_vl_model_id": "(fill_in)",
+    "bunny_model_id": "(fill_in)"
 }
 ```
 If your install directory is /home/username/Desktop/oobLucidVision/text-generation-webui/  the config file will look like this for example:
@@ -148,7 +156,8 @@ Make note that you want to change / to \ if you are on Windows
     "paligemma_model_id": "(fill_In)", *This is the folder where your paligemma vision model is stored
     "paligemma_cpu_model_id": "(fill_In)", *This is the folder where your paligemma vision model is stored
     "minicpm_llama3_model_id": "(fill_In)", *This is the folder where your minicpm_llama3 vision model is stored, the model can either be the normal fp16 or 4-bit version
-    "deepseek_vl_model_id": "(fill_in)"  *This is the folder where your deepseek vision model is stored
+    "deepseek_vl_model_id": "(fill_in)",  *This is the folder where your deepseek vision model is stored
+    "bunny_model_id": "(fill_in)" *This is the folder where your Bunny-v1_1-Llama-3-8B-V vision model is stored
    }
 ```
 
