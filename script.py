@@ -12,6 +12,8 @@ from deepseek_vl.utils.io import load_pil_images as load_pil_images_for_deepseek
 from transformers import AutoModelForCausalLM, AutoModel, AutoTokenizer, AutoProcessor, \
     PaliGemmaForConditionalGeneration
 
+model_names = ["phiVision", "DeepSeek", "paligemma", "paligemma_cpu", "minicpm_llama3", "bunny"]
+
 
 # Load configuration settings from a JSON file
 def load_config():
@@ -32,6 +34,8 @@ paligemma_model_id = config["paligemma_model_id"]
 
 minicpm_llama3_model_id = config["minicpm_llama3_model_id"]
 
+bunny_model_id = config["bunny_model_id"]
+
 cuda_device = config["cuda_visible_devices"]
 
 selected_vision_model = config["default_vision_model"]
@@ -50,6 +54,7 @@ global minicpm_llama_model, minicpm_llama_tokenizer
 global paligemma_model, paligemma_processor
 global paligemma_cpu_model, paligemma_cpu_processor
 global deepseek_processor, deepseek_tokenizer, deepseek_gpt
+global bunny_model, bunny_tokenizer
 
 
 # Function to generate a timestamped filename for saved images
@@ -121,7 +126,7 @@ def ui():
 
     # Add radio buttons for vision model selection
     vision_model_selection = gr.Radio(
-        choices=["phiVision", "DeepSeek", "paligemma", "paligemma_cpu", "minicpm_llama3"],
+        choices=model_names,
         # Added "paligemma_cpu" as a choice
         value=config["default_vision_model"],
         label="Select Vision Model"
@@ -343,6 +348,29 @@ def unload_deepseek_model():
     torch.cuda.empty_cache()
 
 
+def load_bunny_model():
+    global bunny_model, bunny_tokenizer, cuda_device
+    bunny_model = AutoModelForCausalLM.from_pretrained(
+        bunny_model_id,
+        torch_dtype=torch.bfloat16,
+        device_map={"": cuda_device},  # Use the specified CUDA device
+        trust_remote_code=True
+    ).to(torch.bfloat16).cuda()
+    bunny_tokenizer = AutoTokenizer.from_pretrained(
+        bunny_model_id,
+        trust_remote_code=True
+    )
+    print("Bunny model loaded on-demand.")
+
+
+def unload_bunny_model():
+    global bunny_model, bunny_tokenizer
+    if bunny_model is not None:
+        del bunny_model, bunny_tokenizer
+        print("Bunny model unloaded.")
+    torch.cuda.empty_cache()
+
+
 # Function to modify the output from the LLM before it is displayed to the user
 def output_modifier(output, state, is_chat=False):
     global cuda_device
@@ -374,6 +402,9 @@ def output_modifier(output, state, is_chat=False):
 
         elif selected_vision_model == "minicpm_llama3":
             vision_model_response = generate_minicpm_llama3(file_path, questions)
+
+        elif selected_vision_model == "bunny":
+            vision_model_response = generate_bunny(file_path, questions)
 
         # Append the vision model's responses to the output
         output_with_responses = f"{output}\n\nVision Model Responses:\n{vision_model_response}"
@@ -454,6 +485,9 @@ def process_with_vision_model(user_input, image, selected_model):
 
     elif selected_model == "minicpm_llama3":
         vision_model_response = generate_minicpm_llama3(file_path, user_input)
+
+    elif selected_model == "bunny":
+        vision_model_response = generate_bunny(file_path, user_input)
 
     # Return the cleaned-up response from the vision model
     return vision_model_response
@@ -591,6 +625,34 @@ def generate_deepseek(file_path, user_input):
         return deepseek_tokenizer.decode(outputs[0].cpu().tolist(), skip_special_tokens=True)
     finally:
         unload_deepseek_model()
+
+
+def generate_bunny(file_path, user_input):
+    global cuda_device
+    try:
+        load_bunny_model()
+        with Image.open(file_path) as image:
+            text = f"A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER: <image>\n{user_input} ASSISTANT:"
+            text_chunks = [bunny_tokenizer(chunk).input_ids for chunk in text.split('<image>')]
+            input_ids = torch.tensor(text_chunks[0] + [-200] + text_chunks[1][1:], dtype=torch.long).unsqueeze(0).to(
+                f"cuda:{cuda_device}")
+            image_tensor = bunny_model.process_images(
+                [image],
+                bunny_model.config
+            ).to(
+                dtype=bunny_model.dtype,
+                device=bunny_model.device
+            )
+            output_ids = bunny_model.generate(
+                input_ids,
+                images=image_tensor,
+                max_new_tokens=896,
+                use_cache=True,
+                repetition_penalty=1.0
+            )[0]
+            return bunny_tokenizer.decode(output_ids[input_ids.shape[1]:], skip_special_tokens=True).strip()
+    finally:
+        unload_bunny_model()
 
 
 # Function to modify the chat history before it is used for text generation
