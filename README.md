@@ -88,6 +88,8 @@ The extension is designed to be efficient with system resources by only loading 
 2. Update the transformers library using the cmd_yourOShere.sh/bat file (so either cmd_linux.sh, cmd_macos.sh, cmd_windows.bat, or cmd_wsl.bat) and entering the following lines.  If you run the update wizard after this point, it will overrite this update to transformers.  The newest transformers package has the libraries for paligemma, which the code needs to import regardless of whether or not you are intending to use the model.
 
 ```
+*note about most recent transformers, for me it looks to have caused an issue with text streaming on firefox; if you experience streaming text issues in firefox this is likely the reason.  Text generation in general is not affected, and google chrome seems to work.
+
 pip uninstall transformers -y
 
 pip install transformers --upgrade --no-cache-dir
