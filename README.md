@@ -81,21 +81,35 @@ The extension is designed to be efficient with system resources by only loading 
 
 ## **How to install and setup:**
 
-1. Install this edited prior commit from oobabooga's textgen https://github.com/RandomInternetPreson/textgen_webui_Lucid_Vision_Testing OR use the latest version of textgen.  If using the edited older version, make sure to rename the install folder `text-generation-webui`
+~~1. ~~Install this edited prior commit from oobabooga's textgen https://github.com/RandomInternetPreson/textgen_webui_Lucid_Vision_Testing OR~~ use the latest version of textgen.  ~~If using the edited older version, make sure to rename the install folder `text-generation-webui`~~
    
-(Note, a couple months ago gradio had a massive update.  For me, this has caused a lot of glitches and errors with extensions; I've briefly tested the Lucid_Vision extension in the newest implementation of textgen and it will work.  However, I was getting timeout popups when vision models were loading for the first time, gradio wasn't waiting for the response from the model upon first load. After a model is loaded once, it is saved in cpu ram cache (this doesn't actively use your ram, it just uses what is free to keep the models in memory so they are quickly reloaded into gpu ram if necessary) and gradio doesn't seem to timeout as often.  The slightly older version of textgen that I've edited does not experience this issue)
+~~(Note, a couple months ago gradio had a massive update.  For me, this has caused a lot of glitches and errors with extensions; I've briefly tested the Lucid_Vision extension in the newest implementation of textgen and it will work.  However, I was getting timeout popups when vision models were loading for the first time, gradio wasn't waiting for the response from the model upon first load. After a model is loaded once, it is saved in cpu ram cache (this doesn't actively use your ram, it just uses what is free to keep the models in memory so they are quickly reloaded into gpu ram if necessary) and gradio doesn't seem to timeout as often.  The slightly older version of textgen that I've edited does not experience this issue)~~
 
-2. Update the transformers library using the cmd_yourOShere.sh/bat file (so either cmd_linux.sh, cmd_macos.sh, cmd_windows.bat, or cmd_wsl.bat) and entering the following lines.  If you run the update wizard after this point, it will overrite this update to transformers.  The newest transformers package has the libraries for paligemma, which the code needs to import regardless of whether or not you are intending to use the model.
+~~2. Update the transformers library using the cmd_yourOShere.sh/bat file (so either cmd_linux.sh, cmd_macos.sh, cmd_windows.bat, or cmd_wsl.bat) and entering the following lines.  If you run the update wizard after this point, it will overrite this update to transformers.  The newest transformers package has the libraries for paligemma, which the code needs to import regardless of whether or not you are intending to use the model.~~
 
-```
-*note about most recent transformers, for me it looks to have caused an issue with text streaming on firefox; if you experience streaming text issues in firefox this is likely the reason.  Text generation in general is not affected, and google chrome seems to work.
-
-pip uninstall transformers -y
-
-pip install transformers --upgrade --no-cache-dir
-```
+No longer need to update transformers and the latest version of textgen as of this writing 1.9.1 works well with many of the gradio issues resolved, however gradio might timeout on the page when loading a model for the fisrt time still.  After a model is loaded once, it is saved in cpu ram cache (this doesn't actively use your ram, it just uses what is free to keep the models in memory so they are quickly reloaded into gpu ram if necessary) and gradio doesn't seem to timeout as often.
 
 ## Model Information
+
+If you do not want to install DeepseekVL dependencies and are not intending to use deepseek comment out the import lines from the script.py file as displayed here
+
+```
+# pip install pexpect
+import json
+import re
+from datetime import datetime  # Import datetime for timestamp generation
+from pathlib import Path
+
+import gradio as gr
+import torch
+from PIL import Image
+#from deepseek_vl.models import VLChatProcessor
+#from deepseek_vl.utils.io import load_pil_images as load_pil_images_for_deepseek
+from transformers import AutoModelForCausalLM, AutoModel, AutoTokenizer, AutoProcessor, \
+    PaliGemmaForConditionalGeneration
+
+model_names = ["phiVision", "DeepSeek", "paligemma", "paligemma_cpu", "minicpm_llama3", "bunny"]
+```
 
 3. Install **DeepseekVL** if you intend on using that model
    
@@ -242,7 +256,7 @@ Start out by interacting with the vision models without involvement of a seperat
 Do this with every model you intend on using, upload a picture, and ask a question 
 
 
-## **ADVANCED:**
+## **ADVANCED:  Updated Tips At End on how to get working with Llama-3-Instruct-8B-SPPO-Iter3 https://huggingface.co/UCLA-AGI/Llama-3-Instruct-8B-SPPO-Iter3**
 
 Okay, this is why I built the extension in the first place; direct interaction with the vision model was actually an afterthought after I had all the code working.
 
@@ -291,3 +305,63 @@ If you run into this situation, it is best to prompt your LLM like this:
 6. Please do not get frustrated right away, the Advanced method of usage depends heavily on your LLM's ability to understand the instructions from the character card.  The instructions were written by the 8x22B model itself, I explained what I wanted the model to do and had it write its own instructions.  This might be a viable alternative if you are struggling to get your model to adhere to the instructions from the character card.
 
 You may need to explain things to your llm as your conversation progresses, if it tries to query the vision model when you don't want it to, just explain that to the model and it's unlikely to keep making the same mistake.  
+
+## **Tips on how to get working with Llama-3-Instruct-8B-SPPO-Iter3 https://huggingface.co/UCLA-AGI/Llama-3-Instruct-8B-SPPO-Iter3**
+
+I have found to get this model (and likely similar models) working properly with lucid vision I needed to NOT use the AI_Image character card.  
+
+Instead I started the conversation with the model like this:
+
+![image](https://github.com/user-attachments/assets/4d0ff97c-f9dd-4043-b5be-7b915cb7aae7)
+
+Then copy and pasted the necessary information from the character card:
+
+```
+The following is a conversation with an AI Large Language Model. The AI has been trained to answer questions, provide recommendations, and help with decision making. The AI follows user requests. The AI thinks outside the box.
+
+Instructions for Processing Image-Related User Input with Appended File Information:
+
+    Identify the Trigger Phrase: Begin by scanning the user input for the presence of the "File location" trigger phrase. This phrase indicates that the user has selected an image and that the LLM should consider this information in its response.
+
+    Extract the File Path: Once the trigger phrase is identified, parse the text that follows to extract the absolute file path of the image. The file path will be provided immediately after the trigger phrase and will end with the image file extension (e.g., .png, .jpg).
+
+    Understand the Context: Recognize that the user's message preceding the file path is the primary context for the interaction. The LLM should address the user's query or statement while also incorporating the availability of the selected image into its response.
+
+    Formulate Questions for the Vision Model: Based on the user's message and the fact that an image is available for analysis, generate one or more questions that can be answered by the vision model. These questions should be clear, specific, and relevant to the image content.
+
+    Maintain a Conversational Tone: Ensure that the response is natural, coherent, and maintains the flow of the conversation. The LLM should act as an intermediary between the user and the vision model, facilitating a seamless dialogue.
+
+    Prepare the Response Structure: Structure the response so that it includes:
+
+    An acknowledgment of the user's initial message.
+
+    The questions formulated for the vision model, each clearly separated (e.g., by a newline or bullet point).
+
+    Any additional information or clarification requests, if necessary.
+
+    Append the File Path for Processing: At the end of the response, re-append the "File location" trigger phrase along with the extracted file path. This ensures that the subsequent processing steps (such as sending the information to the vision model's CLI) can correctly identify and use the file path.
+
+    Avoid Direct Interaction with the File System: As an LLM, you do not have the capability to directly access or modify files on the server or client systems. Your role is limited to generating text-based responses that include the necessary file path information for other system components to handle.
+
+    Example Response:
+
+   Based on your question about the contents of the image, here are the questions I will ask the vision model:
+
+   - Can you describe the main objects present in the image?
+   - Is there any text visible in the image, and if so, what does it say?
+   - What appears to be happening in the scene depicted in the image?
+
+   File location: //home/myself/Pictures/rose.png
+   
+   Do review and contextualize the conversation as it develops (reference your context) to infer if the user is asking new questions of previous images.  Reference the parts of the convesation that are likely to yeild the file location of the image in question, and formulate your response to include that specific file location of that unique .png file, make sure you are referencing the correct .png file as per the part of the conversation that is likely to be in reference to the updated information request.
+
+By following these instructions, the LLM will be able to effectively process user inputs that include image file information and generate appropriate responses that facilitate the interaction between the user and the vision model.
+```
+
+Making sure to give a real file location to a real image.
+
+After that it started to pretty much work but I still needed to correct the model (I had to add the spelling error intentionally because if the user sends "File Location:" is messes up the extension:
+
+![image](https://github.com/user-attachments/assets/5090ef8b-88ff-4ec1-a131-ba57e15e9a7d)
+
+The point to take away is that you may need to explain things to your model in various ways for it to contextualize the instructions approprately.
