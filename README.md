@@ -81,7 +81,7 @@ The extension is designed to be efficient with system resources by only loading 
 
 ## **How to install and setup:**
 
-~~1. ~~Install this edited prior commit from oobabooga's textgen https://github.com/RandomInternetPreson/textgen_webui_Lucid_Vision_Testing OR~~ use the latest version of textgen.  ~~If using the edited older version, make sure to rename the install folder `text-generation-webui`~~
+1.use the latest version of textgen ~~Install this edited prior commit from oobabooga's textgen https://github.com/RandomInternetPreson/textgen_webui_Lucid_Vision_Testing OR use the latest version of textgen.~~ ~~If using the edited older version, make sure to rename the install folder `text-generation-webui`~~
    
 ~~(Note, a couple months ago gradio had a massive update.  For me, this has caused a lot of glitches and errors with extensions; I've briefly tested the Lucid_Vision extension in the newest implementation of textgen and it will work.  However, I was getting timeout popups when vision models were loading for the first time, gradio wasn't waiting for the response from the model upon first load. After a model is loaded once, it is saved in cpu ram cache (this doesn't actively use your ram, it just uses what is free to keep the models in memory so they are quickly reloaded into gpu ram if necessary) and gradio doesn't seem to timeout as often.  The slightly older version of textgen that I've edited does not experience this issue)~~
 
