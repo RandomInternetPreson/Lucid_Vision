@@ -173,6 +173,7 @@ def ui():
 
 
 
+
 # Function to load the PaliGemma CPU model and processor
 def load_paligemma_cpu_model():
     global paligemma_cpu_model, paligemma_cpu_processor
@@ -645,8 +646,12 @@ def process_with_vision_model(user_input, image, selected_model):
     elif selected_model == "aria":
         vision_model_response = process_with_aria_model(file_path, user_input)
 
+    # Debug print statement to check the response
+    print(f"Vision model response: {vision_model_response}")
+
     # Return the cleaned-up response from the vision model
     return vision_model_response
+
 
 
 def generate_paligemma_cpu(file_path, user_input):
@@ -708,16 +713,11 @@ def generate_phi_vision(file_path, user_input):
         with Image.open(file_path) as img:
             # Prepare the prompt for the PhiVision model
             messages = [
-                {"role": "user", "content": f"<|image_1|>\n{user_input}"}
+                {"role": "user", "content": f"<|image_1|>\\n{user_input}"}
             ]
             prompt = phiVision_processor.tokenizer.apply_chat_template(
                 messages, tokenize=False, add_generation_prompt=True
             )
-            # Extract the CUDA_VISIBLE_DEVICES setting from the config file
-            # cuda_devices = config["cuda_visible_devices"]
-            # Convert the CUDA_VISIBLE_DEVICES string to an integer (assuming a single device for simplicity)
-            # cuda_device_index = int(cuda_devices)
-
             # Prepare the model inputs and move them to the specified CUDA device
             inputs = phiVision_processor(prompt, [img], return_tensors="pt").to(f"cuda:{cuda_device}")
             # Define the generation arguments
@@ -725,7 +725,6 @@ def generate_phi_vision(file_path, user_input):
                 "max_new_tokens": 500,
                 "temperature": 1.0,
                 "do_sample": True,  # Set to True for sampling-based generation
-                # "min_p": 0.95,  # Optionally set a minimum probability threshold
             }
             # Generate the response using the PhiVision model
             generate_ids = phiVision_model.generate(
@@ -741,10 +740,13 @@ def generate_phi_vision(file_path, user_input):
                 skip_special_tokens=True,
                 clean_up_tokenization_spaces=False
             )[0]
+        # Debug print statement to check the response
+        print(f"PhiVision response: {vision_model_response}")
         # Unload the PhiVision model and processor after generating the response
         return vision_model_response
     finally:
         unload_phi_vision_model()
+
 
 
 def generate_deepseek(file_path, user_input):
