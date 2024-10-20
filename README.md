@@ -1,3 +1,5 @@
+** Added GOT-ORC and Aira (https://github.com/Ucas-HaoranWei/GOT-OCR2.0/  &  https://huggingface.co/rhymes-ai/Aria) to the extension.  If using Aria you will likely need the model ducking extension to unload your llm off the vram to let the Aria model load it uses about 60GB of vram.
+
 Video Demo:
 
 There is code in this repo to prevent Alltalk from reading the directory names out loud ([here](https://github.com/RandomInternetPreson/Lucid_Vision/tree/main?tab=readme-ov-file#to-work-with-alltalk)), the video is older and displays Alltalk reading the directory names however. 
