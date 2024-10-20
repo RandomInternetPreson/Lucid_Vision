@@ -7,5 +7,7 @@
     "paligemma_cpu_model_id": "(fill_In)",
     "minicpm_llama3_model_id": "(fill_in)",
     "deepseek_vl_model_id": "(fill_in)",
-    "bunny_model_id": "(fill_in)"
+    "bunny_model_id": "(fill_in)",
+    "got_ocr_model_id": "(fill_in)",
+    "aria_model_id": "(fill_in)"
 }
