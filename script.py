@@ -3,12 +3,15 @@ import json
 import re
 from datetime import datetime  # Import datetime for timestamp generation
 from pathlib import Path
-
+import os
+import uuid
+import base64
+import gc
 import gradio as gr
 import torch
 from PIL import Image
-from deepseek_vl.models import VLChatProcessor
-from deepseek_vl.utils.io import load_pil_images as load_pil_images_for_deepseek
+#from deepseek_vl.models import VLChatProcessor
+#from deepseek_vl.utils.io import load_pil_images as load_pil_images_for_deepseek
 from transformers import AutoModelForCausalLM, AutoModel, AutoTokenizer, AutoProcessor, \
     PaliGemmaForConditionalGeneration
 
@@ -126,8 +129,7 @@ def ui():
 
     # Add radio buttons for vision model selection
     vision_model_selection = gr.Radio(
-        choices=model_names,
-        # Added "paligemma_cpu" as a choice
+        choices=model_names + ["got_ocr", "aria"],
         value=config["default_vision_model"],
         label="Select Vision Model"
     )
@@ -155,7 +157,6 @@ def ui():
     vision_model_button.click(
         fn=process_with_vision_model,
         inputs=[user_input_to_vision_model, image_input, vision_model_selection],
-        # Pass the actual gr.Image component
         outputs=vision_model_response_output
     )
 
@@ -169,6 +170,7 @@ def ui():
             vision_model_selection
         ]
     )
+
 
 
 # Function to load the PaliGemma CPU model and processor
@@ -372,6 +374,153 @@ def unload_bunny_model():
     torch.cuda.empty_cache()
 
 
+def load_got_ocr_model():
+    global got_ocr_model, got_ocr_tokenizer
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    torch.cuda.set_device(0)  # Explicitly set CUDA device
+
+    got_ocr_model = AutoModel.from_pretrained(config["got_ocr_model_id"], trust_remote_code=True, low_cpu_mem_usage=True, device_map='cuda:0', use_safetensors=True).eval().cuda()
+    got_ocr_tokenizer = AutoTokenizer.from_pretrained(config["got_ocr_model_id"], trust_remote_code=True)
+    print("GOT-OCR model loaded.")
+
+def unload_got_ocr_model():
+    global got_ocr_model, got_ocr_tokenizer
+    if got_ocr_model is not None:
+        del got_ocr_model
+        del got_ocr_tokenizer
+        torch.cuda.empty_cache()
+        print("GOT-OCR model unloaded.")
+
+
+
+def process_with_got_ocr_model(image_path, got_mode, fine_grained_mode="", ocr_color="", ocr_box=""):
+    load_got_ocr_model()
+    try:
+        unique_id = str(uuid.uuid4())
+        result_path = f"extensions/Lucid_Autonomy/ImageOutputTest/result_{unique_id}.html"
+
+        if got_mode == "plain texts OCR":
+            res = got_ocr_model.chat(got_ocr_tokenizer, str(image_path), ocr_type='ocr')
+            return res, None
+        elif got_mode == "format texts OCR":
+            res = got_ocr_model.chat(got_ocr_tokenizer, str(image_path), ocr_type='format', render=True, save_render_file=result_path)
+        elif got_mode == "plain multi-crop OCR":
+            res = got_ocr_model.chat_crop(got_ocr_tokenizer, str(image_path), ocr_type='ocr')
+            return res, None
+        elif got_mode == "format multi-crop OCR":
+            res = got_ocr_model.chat_crop(got_ocr_tokenizer, str(image_path), ocr_type='format', render=True, save_render_file=result_path)
+        elif got_mode == "plain fine-grained OCR":
+            res = got_ocr_model.chat(got_ocr_tokenizer, str(image_path), ocr_type='ocr', ocr_box=ocr_box, ocr_color=ocr_color)
+            return res, None
+        elif got_mode == "format fine-grained OCR":
+            res = got_ocr_model.chat(got_ocr_tokenizer, str(image_path), ocr_type='format', ocr_box=ocr_box, ocr_color=ocr_color, render=True, save_render_file=result_path)
+
+        res_markdown = res
+
+        if "format" in got_mode and os.path.exists(result_path):
+            with open(result_path, 'r') as f:
+                html_content = f.read()
+            encoded_html = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
+            iframe_src = f"data:text/html;base64,{encoded_html}"
+            iframe = f'<iframe src="{iframe_src}" width="100%" height="600px"></iframe>'
+            download_link = f'<a href="data:text/html;base64,{encoded_html}" download="result_{unique_id}.html">Download Full Result</a>'
+            return res_markdown, f"{download_link}<br>{iframe}"
+        else:
+            return res_markdown, None
+    except Exception as e:
+        return f"Error: {str(e)}", None
+    finally:
+        unload_got_ocr_model()
+
+
+
+aria_model = None
+aria_processor = None
+
+def load_aria_model():
+    global aria_model, aria_processor
+    if aria_model is None:
+        print("Loading ARIA model...")
+        aria_model = AutoModelForCausalLM.from_pretrained(
+            config["aria_model_id"],
+            device_map="auto",
+            torch_dtype=torch.bfloat16,
+            trust_remote_code=True
+        )
+        aria_processor = AutoProcessor.from_pretrained(
+            config["aria_model_id"],
+            trust_remote_code=True
+        )
+        print("ARIA model loaded successfully.")
+    else:
+        print("ARIA model already loaded.")
+
+
+def unload_aria_model():
+    global aria_model, aria_processor
+    if aria_model is not None:
+        print("Unloading ARIA model...")
+        # Move model to CPU before deletion
+        aria_model.cpu()
+        # Delete the model and processor
+        del aria_model
+        del aria_processor
+        # Set to None to indicate they're unloaded
+        aria_model = None
+        aria_processor = None
+        # Clear CUDA cache
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        # Run garbage collection
+        gc.collect()
+        print("ARIA model unloaded successfully.")
+    else:
+        print("ARIA model not loaded, nothing to unload.")
+
+    # Print current GPU memory usage
+    if torch.cuda.is_available():
+        print(f"Current GPU memory allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
+        print(f"Current GPU memory reserved: {torch.cuda.memory_reserved() / 1e9:.2f} GB")
+
+
+def process_with_aria_model(image_path, question):
+    global aria_model, aria_processor
+
+    if aria_model is None:
+        load_aria_model()
+
+    print("Processing image with ARIA model...")
+    image = Image.open(image_path).convert("RGB")
+    messages = [
+        {"role": "user", "content": [
+            {"text": None, "type": "image"},
+            {"text": question, "type": "text"},
+        ]}
+    ]
+
+    text = aria_processor.apply_chat_template(messages, add_generation_prompt=True)
+    inputs = aria_processor(text=text, images=image, return_tensors="pt")
+    inputs["pixel_values"] = inputs["pixel_values"].to(aria_model.dtype)
+    inputs = {k: v.to(aria_model.device) for k, v in inputs.items()}
+
+    with torch.inference_mode(), torch.cuda.amp.autocast(dtype=torch.bfloat16):
+        output = aria_model.generate(
+            **inputs,
+            max_new_tokens=1024,
+            stop_strings=["<|im_end|>"],
+            tokenizer=aria_processor.tokenizer,
+            do_sample=True,
+            temperature=0.9,
+        )
+        output_ids = output[0][inputs["input_ids"].shape[1]:]
+        result = aria_processor.decode(output_ids, skip_special_tokens=True)
+
+    print("Image processing complete.")
+    return result
+
+
+
+
 # Function to modify the output from the LLM before it is displayed to the user
 def output_modifier(output, state, is_chat=False):
     global cuda_device
@@ -412,6 +561,7 @@ def output_modifier(output, state, is_chat=False):
         return output_with_responses
     # If no file location is found, return the output as is
     return output
+
 
 
 # Function to generate a response using the MiniCPM-Llama3 model
@@ -459,7 +609,6 @@ def generate_minicpm_llama3(file_path, questions):
         unload_minicpm_llama_model()
 
 
-# Function to process the user's input text and selected image with the vision model
 def process_with_vision_model(user_input, image, selected_model):
     global cuda_device
     # Save the uploaded image to the specified directory with a timestamp
@@ -489,6 +638,12 @@ def process_with_vision_model(user_input, image, selected_model):
 
     elif selected_model == "bunny":
         vision_model_response = generate_bunny(file_path, user_input)
+
+    elif selected_model == "got_ocr":
+        vision_model_response, _ = process_with_got_ocr_model(file_path, got_mode="plain texts OCR")
+
+    elif selected_model == "aria":
+        vision_model_response = process_with_aria_model(file_path, user_input)
 
     # Return the cleaned-up response from the vision model
     return vision_model_response
