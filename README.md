@@ -1,6 +1,6 @@
 ** Added GOT-ORC and Aira (https://github.com/Ucas-HaoranWei/GOT-OCR2.0/  &  https://huggingface.co/rhymes-ai/Aria) to the extension.  If using Aria you will likely need the model ducking extension to unload your llm off the vram to let the Aria model load; it uses about 60GB of vram.
 
-By Default Deepseek is disabled.  If you want to use Deepseek, you'll need to uncomment the dependnecies at the top of the code.
+By Default Deepseek is disabled.  If you want to use Deepseek, you'll need to uncomment the dependencies at the top of the code.
 
 Video Demo:
 
