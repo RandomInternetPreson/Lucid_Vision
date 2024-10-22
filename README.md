@@ -2,7 +2,7 @@
 
 * By Default Deepseek is disabled.  If you want to use Deepseek, you'll need to uncomment the dependencies at the top of the code.
 
-* You can use [Mini-CPM V1.6](https://huggingface.co/openbmb/MiniCPM-V-2_6) instead of 1.5
+* You can use [Mini-CPM V1.6](https://huggingface.co/openbmb/MiniCPM-V-2_6) [(4-bit too)](https://huggingface.co/openbmb/MiniCPM-V-2_6-int4) instead of 1.5
 
 Video Demo:
 
